@@ -62,7 +62,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                             .build());
             //  获取到上传之后的文件路径：
             //  https://www.image.com/ts/1213oiqwe.jpg;
-            //  http://192.168.200.130:9000/tingshu/atguigu.jpg
+            //  http://192.168.6.129:9000/tingshu/atguigu.jpg
             url = minioConstantProperties.getEndpointUrl()+"/"+minioConstantProperties.getBucketName()+"/"+fileName;
             System.out.println("url:\t"+url);
         } catch (Exception e) {

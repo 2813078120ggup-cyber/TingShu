@@ -46,7 +46,7 @@ spring:
           predicates:
             - Path=/*/live/**
         - id: service-live-websocket
-          uri: lb:ws://service-live #ws://localhost:8507
+          uri: lb:ws://service-live #ws://192.168.6.129:8507
           predicates:
             - Path=/api/websocket/**
         - id: service-account

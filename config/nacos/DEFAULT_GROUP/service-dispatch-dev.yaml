@@ -13,7 +13,7 @@ spring:
   cloud:
     sentinel:
       transport:
-        dashboard: localhost:8080
+        dashboard: 192.168.6.129:8080
     openfeign:
       lazy-attributes-resolution: true
       client:
@@ -24,7 +24,7 @@ spring:
             loggerLevel: basic
   data:
     redis:
-      host: 127.0.0.1
+      host: 192.168.6.129
       port: 6379
       database: 0
       timeout: 1800000
@@ -37,7 +37,7 @@ spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/tingshu_dispatch?serverTimezone=UTC&characterEncoding=utf8&useUnicode=true&useSSL=true
+    url: jdbc:mysql://192.168.6.129:3306/tingshu_dispatch?serverTimezone=UTC&characterEncoding=utf8&useUnicode=true&useSSL=true
     username: "${SPRING_DATASOURCE_USERNAME}"
     password: "${SPRING_DATASOURCE_PASSWORD}"
     hikari:
@@ -55,7 +55,7 @@ xxl:
   job:
     admin:
       # 调度中心部署跟地址 [选填]：如调度中心集群部署存在多个地址则用逗号分隔。执行器将会使用该地址进行"执行器心跳注册"和"任务结果回调"；为空则关闭自动注册
-      addresses: http://localhost:8080/xxl-job-admin
+      addresses: http://192.168.6.129:8080/xxl-job-admin
       # 执行器通讯TOKEN [选填]：非空时启用
     accessToken: "${XXL_JOB_ACCESS_TOKEN}"
 

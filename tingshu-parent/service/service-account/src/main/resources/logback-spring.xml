@@ -47,7 +47,7 @@
     <!-- logstash日志 -->
 <!--    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">-->
 <!--        &lt;!&ndash; logstash ip和暴露的端口，logback就是通过这个地址把日志发送给logstash &ndash;&gt;-->
-<!--        <destination>139.198.127.41:8044</destination>-->
+<!--        <destination>192.168.6.129:8044</destination>-->
 <!--        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder" />-->
 <!--    </appender>-->
 

@@ -13,7 +13,7 @@ spring:
   cloud:
     sentinel:
       transport:
-        dashboard: localhost:8080
+        dashboard: 192.168.6.129:8080
     openfeign:
       lazy-attributes-resolution: true
       client:
@@ -23,12 +23,12 @@ spring:
             readTimeout: 30000
             loggerLevel: basic
   elasticsearch:
-      uris: http://127.0.0.1:9200
+      uris: http://192.168.6.129:9200
       username: "${SPRING_ELASTICSEARCH_USERNAME}"
       password: "${SPRING_ELASTICSEARCH_PASSWORD}"
   data:
     redis:
-      host: 127.0.0.1
+      host: 192.168.6.129
       port: 6379
       database: 0
       timeout: 1800000
@@ -39,7 +39,7 @@ spring:
           max-idle: 5    #最大空闲
           min-idle: 0     #最小空闲
   rabbitmq:
-    host: 127.0.0.1
+    host: 192.168.6.129
     port: 5672
     username: "${SPRING_RABBITMQ_USERNAME}"
     password: "${SPRING_RABBITMQ_PASSWORD}"

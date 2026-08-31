@@ -4,6 +4,8 @@
 
 **当前为开发初始版本，不具备直接上线条件。** 已有分类查询和文件上传接口，其余大部分业务控制器与服务仍为骨架。网关鉴权尚未实现。具体审查结论见 [代码审查记录](docs/CODE_REVIEW.md)。
 
+接口资料：[中文接口文档](docs/api-reference.md) · [OpenAPI 定义](docs/openapi.json)。仅将已有服务端实现的接口列为可调用契约，其余控制器和外部调用单独说明。
+
 ## 项目结构
 
 | 路径 | 内容 |
@@ -31,7 +33,7 @@ mvn -B -ntp -f tingshu-parent/pom.xml -DskipTests=false -Dmaven.test.skip=false 
 
 1. 按服务需要准备 Nacos、MySQL、Redis、RabbitMQ、MinIO、Elasticsearch、MongoDB、XXL-JOB 等依赖。
 2. 参考 [Nacos 模板说明](config/nacos/README.md)，配置对应基础设施地址及凭据，再以原文件名作为 Data ID 导入 Nacos 的 `DEFAULT_GROUP`。
-3. `bootstrap.properties` 保留原本地开发地址。可通过 `SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR`、`SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR` 覆盖 Nacos 地址，通过 `SPRING_PROFILES_ACTIVE` 切换环境。
+3. `bootstrap.properties` 和配套配置中的服务主机地址统一为 `192.168.6.129`，原有端口保持不变。可通过 `SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR`、`SPRING_CLOUD_NACOS_CONFIG_SERVER_ADDR` 覆盖 Nacos 地址，通过 `SPRING_PROFILES_ACTIVE` 切换环境。
 4. 在应用进程环境中设置所用模板中的 `${变量名}`。模板不包含真实密码、云服务密钥或支付证书。
 
 两个静态签名工具使用以下外部配置，缺失或空白时会拒绝签名，不再使用源码内置密钥：
