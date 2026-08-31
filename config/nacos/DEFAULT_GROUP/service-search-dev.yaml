@@ -1,0 +1,54 @@
+# Sanitized Nacos template. Set placeholders in the application environment before use.
+server:
+  port: 8502
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 查看日志
+feign:
+  sentinel:
+    enabled: true
+spring:
+  main:
+    allow-bean-definition-overriding: true #当遇到同样名字的时候，是否允许覆盖注册
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8080
+    openfeign:
+      lazy-attributes-resolution: true
+      client:
+        config:
+          default:
+            connectTimeout: 30000
+            readTimeout: 30000
+            loggerLevel: basic
+  elasticsearch:
+      uris: http://127.0.0.1:9200
+      username: "${SPRING_ELASTICSEARCH_USERNAME}"
+      password: "${SPRING_ELASTICSEARCH_PASSWORD}"
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 0
+      timeout: 1800000
+      jedis:
+        pool:
+          max-active: 20 #最大连接数
+          max-wait: -1    #最大阻塞等待时间(负数表示没限制)
+          max-idle: 5    #最大空闲
+          min-idle: 0     #最小空闲
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${SPRING_RABBITMQ_USERNAME}"
+    password: "${SPRING_RABBITMQ_PASSWORD}"
+    publisher-confirm-type: CORRELATED
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: manual #默认情况下消息消费者是自动确认消息的，如果要手动确认消息则需要修改确认模式为manual
+        prefetch: 1 # 消费者每次从队列获取的消息数量。此属性当不设置时为：轮询分发，设置为1为：公平分发
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8

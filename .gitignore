@@ -1,0 +1,42 @@
+# Maven / Java output
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+.DS_Store
+Thumbs.db
+
+# Local logs, temporary files, and configuration
+*.log
+logs/
+*.tmp
+*.bak
+.env
+.env.*
+!.env.example
+*.local.properties
+*.local.yaml
+*.local.yml
+
+# Private keys and certificates must never be committed
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
+
+# Original Nacos exports contain local credentials; keep them on this machine.
+# Publish only the sanitized templates under config/nacos/DEFAULT_GROUP/.
+/tingshu-parent/资料/DEFAULT_GROUP/

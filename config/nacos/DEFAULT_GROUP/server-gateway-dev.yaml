@@ -1,0 +1,75 @@
+# Sanitized Nacos template. Set placeholders in the application environment before use.
+server:
+  port: 8500
+feign:
+  sentinel:
+    enabled: true
+spring:
+  cloud:
+    openfeign:
+      lazy-attributes-resolution: true
+      client:
+        config:
+          default:
+            connectTimeout: 30000
+            readTimeout: 30000
+            loggerLevel: basic
+    gateway:
+      discovery:      #是否与服务发现组件进行结合，通过 serviceId(必须设置成大写) 转发到具体的服务实例。默认为false，设为true便开启通过服务中心的自动根据 serviceId 创建路由的功能。
+        locator:      #路由访问方式：http://Gateway_HOST:Gateway_PORT/大写的serviceId/**，其中微服务应用名默认大写访问。
+          enabled: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            # 允许请求中携带的头信息
+            allowedHeaders: "*"
+            # 运行跨域的请求方式
+            allowedMethods: "*"
+            # 跨域检测的有效期,单位s
+            maxAge: 36000
+      routes:
+        - id: service-album
+          uri: lb://service-album
+          predicates:
+            - Path=/*/album/**
+        - id: service-user
+          uri: lb://service-user
+          predicates:
+            - Path=/*/user/**
+        - id: service-order
+          uri: lb://service-order
+          predicates:
+            - Path=/*/order/**
+        - id: service-live
+          uri: lb://service-live
+          predicates:
+            - Path=/*/live/**
+        - id: service-live-websocket
+          uri: lb:ws://service-live #ws://localhost:8507
+          predicates:
+            - Path=/api/websocket/**
+        - id: service-account
+          uri: lb://service-account
+          predicates:
+            - Path=/*/account/**
+        - id: service-comment
+          uri: lb://service-comment
+          predicates:
+            - Path=/*/comment/**
+        - id: service-dispatch
+          uri: lb://service-dispatch
+          predicates:
+            - Path=/*/dispatch/**
+        - id: service-payment
+          uri: lb://service-payment
+          predicates:
+            - Path=/*/payment/**
+        - id: service-system
+          uri: lb://service-system
+          predicates:
+            - Path=/*/system/**
+        - id: service-search
+          uri: lb://service-search
+          predicates:
+            - Path=/*/search/**
