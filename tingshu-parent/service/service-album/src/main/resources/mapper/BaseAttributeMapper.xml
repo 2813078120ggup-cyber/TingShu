@@ -5,7 +5,34 @@
 
 
 <mapper namespace="com.atguigu.tingshu.album.mapper.BaseAttributeMapper">
+    <!--自定义返回结果-->
+    <resultMap id="baseAttributeMap" type="com.atguigu.tingshu.model.album.BaseAttribute" autoMapping="true">
+        <!--id:表示主键 property：表示实体类的属性名 column：表示通过sql 执行以后查询出来的字段名-->
+        <id property="id" column="id"></id>
+        <!--result : 表示映射普通字段-->
+        <!--<result property="" column=""></result>-->
+        <!--mybatis 如何配置一对多-->
+        <!--ofType : 返回的数据类型-->
+        <collection property="attributeValueList" ofType="com.atguigu.tingshu.model.album.BaseAttributeValue"
+                    autoMapping="true">
+            <!--如果有字段重复则起别名-->
+            <id property="id" column="attribute_value_id"></id>
+        </collection>
+    </resultMap>
 
+
+    <select id="selectAttribute" resultMap="baseAttributeMap">
+        select ba.id,
+               ba.attribute_name,
+               ba.category1_id,
+               bav.id attribute_value_id,
+               bav.value_name,
+               bav.attribute_id
+        from base_attribute ba
+                 inner join base_attribute_value bav on ba.id = bav.attribute_id
+        where ba.category1_id = #{category1Id}
+        order by ba.id
+    </select>
 
 </mapper>
 

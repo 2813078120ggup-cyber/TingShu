@@ -77,7 +77,7 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
 			List<JSONObject> categoryChild2 = new ArrayList<>();
 
 			map1.forEach((k1,v1)->{
-				Long categoryId2 = k1; //一级分类id
+				Long categoryId2 = k1; //二级分类id
 				List<BaseCategoryView> baseCategoryViewList2 = v1;
 
 				JSONObject jsonObject2 = new JSONObject();
@@ -110,5 +110,12 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
 		});
 
 		return finalList;
+	}
+	
+	
+	@Override
+	public List<BaseAttribute> findAttribute(Long category1Id) {
+		// 调用mapper
+		return baseAttributeMapper.selectAttribute(category1Id);
 	}
 }

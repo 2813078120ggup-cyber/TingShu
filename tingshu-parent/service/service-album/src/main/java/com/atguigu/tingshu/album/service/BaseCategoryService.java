@@ -11,4 +11,6 @@ public interface BaseCategoryService extends IService<BaseCategory1> {
 
     //查询所有分类
     List<JSONObject> getBaseCategoryList();
+    
+    List<BaseAttribute> findAttribute(Long category1Id);
 }

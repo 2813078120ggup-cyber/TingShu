@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.service.BaseCategoryService;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.BaseAttribute;
+import com.atguigu.tingshu.model.album.BaseCategory1;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,16 @@ public class BaseCategoryApiController {
 
 		List<JSONObject> list = baseCategoryService.getBaseCategoryList();
 
+		return Result.ok(list);
+	}
+	
+	
+	// 根据id查询对应标签数据
+	// /api/album/category/findAttribute/2
+	@GetMapping("findAttribute/{category1Id}")
+	public Result findAttribute(@PathVariable ("category1Id") Long category1Id){
+		//调用service方法
+		List<BaseAttribute> list = baseCategoryService.findAttribute(category1Id);
 		return Result.ok(list);
 	}
 }
