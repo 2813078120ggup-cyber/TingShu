@@ -9,7 +9,8 @@ import lombok.Data;
 
 @Data
 @Schema(description = "专辑属性值")
-public class AlbumAttributeValue extends BaseEntity {
+public class
+AlbumAttributeValue extends BaseEntity {
 
 	private static final long serialVersionUID = 1L;
 
