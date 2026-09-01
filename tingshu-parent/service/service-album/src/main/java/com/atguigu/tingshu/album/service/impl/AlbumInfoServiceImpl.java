@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     private AlbumStatMapper albumStatMapper;
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveAlbumInfo(AlbumInfoVo albumInfoVo) {
         // 1. 添加专辑基本信息 album_info
         AlbumInfo albumInfo = new AlbumInfo();
