@@ -5,6 +5,43 @@
 
 
 <mapper namespace="com.atguigu.tingshu.album.mapper.TrackInfoMapper">
-
+    <update id="updateTrackNum">
+        update track_info
+        set order_num = order_num - 1
+        where album_id = #{albumId}
+          and order_num > #{orderNum}
+          and is_deleted = 0
+    </update>
+    <select id="selectUserTrackPage" resultType="com.atguigu.tingshu.vo.album.TrackListVo">
+        select album.id as albumId,
+        album.album_title,
+        track.id as trackId,
+        track.track_title,
+        track.media_duration,
+        if(track.cover_url is null or track.cover_url = '', album.cover_url, track.cover_url) as coverUrl,
+        track.status,
+        track.create_time as createTime,
+        MAX(IF(stat.stat_type = '0701', stat.stat_num, 0)) as playStatNum,
+        MAX(IF(stat.stat_type = '0702', stat.stat_num, 0)) as collectStatNum,
+        MAX(IF(stat.stat_type = '0703', stat.stat_num, 0)) as praiseStatNum,
+        MAX(IF(stat.stat_type = '0704', stat.stat_num, 0)) as commentStatNum
+        from track_info track
+        left join track_stat stat on stat.track_id = track.id
+        left join album_info album on album.id = track.album_id
+        <where>
+            <if test="vo.userId!=null">
+                track.user_id=#{vo.userId}
+            </if>
+            <if test="vo.status!=null and vo.status!=''">
+                and track.status = #{vo.status}
+            </if>
+            <if test="vo.trackTitle!=null and vo.trackTitle !=''">
+                and track.track_title like concat('%',#{vo.trackTitle},'%')
+            </if>
+            and track.is_deleted = 0
+        </where>
+        group by track.id
+        order by track.id desc
+    </select>
 </mapper>
 

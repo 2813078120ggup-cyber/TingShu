@@ -13,4 +13,7 @@ public interface VodService {
     
     // 获取媒体文件信息
     TrackMediaInfoVo getTrackMediaInfo(@NotEmpty(message = "媒体文件Id不能为空") String mediaFileId);
+    
+    // 删除媒体文件
+    void removeTrack(String mediaFileId);
 }
