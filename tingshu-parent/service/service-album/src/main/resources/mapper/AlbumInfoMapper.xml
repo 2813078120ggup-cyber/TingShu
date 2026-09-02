@@ -5,7 +5,34 @@
 
 
 <mapper namespace="com.atguigu.tingshu.album.mapper.AlbumInfoMapper">
-
-
+    <select id="selectUserAlbumPage" resultType="com.atguigu.tingshu.vo.album.AlbumListVo">
+        select
+        album.id as albumId,
+        album.album_title,
+        album.cover_url,
+        album.include_track_count,
+        album.is_finished,
+        max(if(stat.stat_type = '0401', stat_num, 0)) playStatNum,
+        max(if(stat.stat_type = '0402', stat_num, 0)) subscribeStatNum,
+        max(if(stat.stat_type = '0403', stat_num, 0)) buyStatNum,
+        max(if(stat.stat_type = '0404', stat_num, 0)) commentStatNum
+        from album_info album
+        inner join album_stat stat
+        on stat.album_id = album.id
+        <where>
+            <if test="vo.userId!=null">
+                album.user_id = #{vo.userId}
+            </if>
+            <if test="vo.status!=null and vo.status!=''">
+                and album.status = #{vo.status}
+            </if>
+            <if test="vo.albumTitle!=null and vo.albumTitle !=''">
+                and album.album_title like concat('%',#{vo.albumTitle},'%')
+            </if>
+            and album.is_deleted = 0
+        </where>
+        group by album.id
+        order by album.id desc
+    </select>
 </mapper>
 
