@@ -1,5 +1,6 @@
 package com.atguigu.tingshu.common.login;
 
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.result.ResultCodeEnum;
 import com.atguigu.tingshu.model.user.UserInfo;
@@ -51,7 +52,7 @@ public class TingShuLoginAspect {
                 throw new GuiguException(ResultCodeEnum.LOGIN_AUTH);
             }
             // 如果token不为空，根据token查询redis，判断查询数据是否为空，如果为空，返回登录提示
-            UserInfo userInfo = (UserInfo) redisTemplate.opsForValue().get(token);
+            UserInfo userInfo = (UserInfo) redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN_KEY_PREFIX+token);
             // 如果为空，返回登录提示信息
             if (userInfo == null) {
                 throw new GuiguException(ResultCodeEnum.LOGIN_AUTH);

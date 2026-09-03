@@ -4,6 +4,7 @@ import com.atguigu.tingshu.model.account.UserAccount;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface UserAccountService extends IService<UserAccount> {
-
-
+    
+    // 添加用户账户
+    void addUserAccount(Long userId);
 }
