@@ -101,9 +101,9 @@ public class AlbumInfoApiController {
     }
     
     
-    // 远程调用：根据专辑id获得a统计数据
+    // 远程调用：根据专辑id获得4统计数据
     @GetMapping("getAlbumInfoStat/{albumId}")
-    public Result getAlbumInfoStat(@PathVariable Long albumId) {
+    public Result<Map<String, Object>> getAlbumInfoStat(@PathVariable Long albumId) {
         Map<String, Object> map = albumInfoService.getAlbumInfoStat(albumId);
         return Result.ok(map);
     }

@@ -22,4 +22,10 @@ public class AlbumInfoDegradeFeignClient implements AlbumInfoFeignClient {
     public Result<List<AlbumAttributeValue>> findAlbumAttributeValue(Long albumId) {
         return Result.fail();
     }
+    
+    
+    @Override
+    public Result getAlbumInfoStat(Long albumId) {
+        return Result.fail();
+    }
 }

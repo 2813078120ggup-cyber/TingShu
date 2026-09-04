@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -21,9 +22,13 @@ public interface AlbumInfoFeignClient {
     
     // 根据专辑id获取专辑信息
     @GetMapping("api/album/albumInfo/getAlbumInfo/{albumId}")
-    Result<AlbumInfo> getAlbumInfo(@PathVariable Long albumId);
+    Result<AlbumInfo> getAlbumInfo(@PathVariable("albumId") Long albumId);
     
     // 根据专辑id获取专辑标签名称和属性列表
     @GetMapping("api/album/albumInfo/findAlbumAttributeValue/{albumId}")
     Result<List<AlbumAttributeValue>> findAlbumAttributeValue(@PathVariable("albumId") Long albumId);
+    
+    // 根据专辑id获取专辑4统计信息
+    @GetMapping("getAlbumInfoStat/{albumId}")
+    public Result<Map<String, Object>> getAlbumInfoStat(@PathVariable("albumId") Long albumId);
 }
