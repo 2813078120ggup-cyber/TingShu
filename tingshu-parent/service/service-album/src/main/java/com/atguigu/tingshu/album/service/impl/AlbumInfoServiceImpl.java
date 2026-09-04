@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -262,5 +263,24 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 albumAttributeValueMapper.insert(albumAttributeValue);
             });
         }
+    }
+    
+    
+    // 根据专辑id查询专辑统计信息
+    
+    @Override
+    public Map<String, Object> getAlbumInfoStat(Long albumId) {
+        return albumStatMapper.getAlbumInfoStat(albumId);
+    }
+    
+    // 根据专辑id查询专辑标签数据
+    
+    @Override
+    public List<AlbumAttributeValue> findAlbumAttributeValueByAlbumId(Long albumId) {
+        LambdaQueryWrapper<AlbumAttributeValue> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(AlbumAttributeValue::getAlbumId, albumId);
+        List<AlbumAttributeValue> albumAttributeValueList = albumAttributeValueMapper.selectList(lambdaQueryWrapper);
+        //	返回集合数据
+        return albumAttributeValueList;
     }
 }

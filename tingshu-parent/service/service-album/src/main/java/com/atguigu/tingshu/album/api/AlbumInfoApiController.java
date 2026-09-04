@@ -4,6 +4,7 @@ import com.atguigu.tingshu.album.service.AlbumInfoService;
 import com.atguigu.tingshu.common.login.TingShuLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
+import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.query.album.AlbumInfoQuery;
 import com.atguigu.tingshu.vo.album.AlbumInfoVo;
@@ -18,6 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "专辑管理")
 @RestController
@@ -97,5 +99,30 @@ public class AlbumInfoApiController {
         albumInfoService.updateAlbumInfo(albumId, albumInfoVo);
         return Result.ok();
     }
+    
+    
+    // 远程调用：根据专辑id获得a统计数据
+    @GetMapping("getAlbumInfoStat/{albumId}")
+    public Result getAlbumInfoStat(@PathVariable Long albumId) {
+        Map<String, Object> map = albumInfoService.getAlbumInfoStat(albumId);
+        return Result.ok(map);
+    }
+    
+    //根据专辑Id 获取到专辑属性列表
+    /**
+     * 根据专辑Id 获取到专辑属性列表
+     *
+     * @param albumId
+     * @return
+     */
+    @Operation(summary = "获取专辑属性值列表")
+    @GetMapping("findAlbumAttributeValue/{albumId}")
+    public Result<List<AlbumAttributeValue>> findAlbumAttributeValue(@PathVariable Long albumId) {
+        //	获取到专辑属性集合
+        List<AlbumAttributeValue> albumAttributeValueList = albumInfoService.findAlbumAttributeValueByAlbumId(albumId);
+        return Result.ok(albumAttributeValueList);
+    }
+    
+    
 }
 
