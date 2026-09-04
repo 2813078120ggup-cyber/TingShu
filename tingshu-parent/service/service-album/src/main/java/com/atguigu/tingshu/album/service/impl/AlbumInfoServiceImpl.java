@@ -8,6 +8,8 @@ import com.atguigu.tingshu.album.service.AlbumAttributeValueService;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
+import com.atguigu.tingshu.common.rabbit.constant.MqConst;
+import com.atguigu.tingshu.common.rabbit.service.RabbitService;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.model.album.AlbumStat;
@@ -44,6 +46,8 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     private AlbumStatMapper albumStatMapper;
     @Autowired
     private TrackInfoMapper trackInfoMapper;
+    @Autowired
+    private RabbitService rabbitService;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -90,7 +94,14 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         // 评论数
         this.saveAlbumStat(albumInfo.getId(), SystemConstant.ALBUM_STAT_COMMENT);
         
-        
+        // 判断专辑是否公开，如果公开，发送mq消息进行上架
+        String isOpen = albumInfo.getIsOpen();
+        if ("1".equals(isOpen)) {
+            rabbitService.sendMessage(
+                    MqConst.EXCHANGE_ALBUM,
+                    MqConst.ROUTING_ALBUM_UPPER,
+                    albumInfo.getId());
+        }
     }
     
     // 保存专辑统计数据
@@ -220,6 +231,12 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         LambdaQueryWrapper<AlbumStat> lambdaQueryWrapper2 = new LambdaQueryWrapper<>();
         lambdaQueryWrapper2.eq(AlbumStat::getAlbumId, albumId);
         albumStatMapper.delete(lambdaQueryWrapper2);
+        
+        // 发送mq消息
+        rabbitService.sendMessage(
+                MqConst.EXCHANGE_ALBUM,
+                MqConst.ROUTING_ALBUM_LOWER,
+                albumId);
     }
     
     // 根据id查询专辑信息

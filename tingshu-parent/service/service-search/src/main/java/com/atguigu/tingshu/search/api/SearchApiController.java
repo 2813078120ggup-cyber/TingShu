@@ -43,5 +43,21 @@ public class SearchApiController {
         return Result.ok();
     }
     
+    
+    /**
+     * 批量上架
+     *
+     * @return
+     */
+    @Operation(summary = "批量上架")
+    @GetMapping("batchUpperAlbum")
+    public Result batchUpperAlbum() {
+        //  循环
+        for (long i = 1; i <= 1500; i++) {
+            searchService.upperAlbum(i);
+        }
+        //  返回数据
+        return Result.ok();
+    }
 }
 
