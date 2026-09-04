@@ -3,22 +3,23 @@ package com.atguigu.tingshu.user.api;
 import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.atguigu.tingshu.common.constant.RedisConstant;
+import com.atguigu.tingshu.common.login.TingShuLogin;
 import com.atguigu.tingshu.common.rabbit.constant.MqConst;
 import com.atguigu.tingshu.common.rabbit.service.RabbitService;
 import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.user.service.UserInfoService;
+import com.atguigu.tingshu.vo.user.UserInfoVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.error.WxErrorException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -38,6 +39,56 @@ public class WxLoginApiController {
     private WxMaService wxMaService;
     @Autowired
     private RabbitService rabbitService;
+    
+    // 获取当前用户登录信息
+    //Request URL: http://localhost/api/user/wxLogin/getUserInfo
+    //Request Method: GET
+    
+    /**
+     * 根据用户Id获取到用户数据
+     *
+     * @return
+     */
+    @TingShuLogin
+    @Operation(summary = "获取登录信息")
+    @GetMapping("getUserInfo")
+    public Result getUserInfo() {
+        //  获取到用户Id
+        Long userId = AuthContextHolder.getUserId();
+        //  调用服务层方法
+        UserInfo userInfo = userInfoService.getById(userId);
+        // 创建UserInfoVo对象
+        UserInfoVo userInfoVo = new UserInfoVo();
+        BeanUtils.copyProperties(userInfo, userInfoVo);
+        //  返回数据
+        return Result.ok(userInfoVo);
+    }
+    
+    
+    // 更新用户信息
+    
+    /**
+     * 更新用户信息
+     *
+     * @param userInfoVo
+     * @return
+     */
+    @TingShuLogin
+    @Operation(summary = "更新用户信息")
+    @PostMapping("updateUser")
+    public Result updateUser(@RequestBody UserInfoVo userInfoVo) {
+        //  获取到用户Id
+        Long userId = AuthContextHolder.getUserId();
+        UserInfo userInfo = new UserInfo();
+        userInfo.setId(userId);
+        userInfo.setNickname(userInfoVo.getNickname());
+        userInfo.setAvatarUrl(userInfoVo.getAvatarUrl());
+        
+        //  执行更新方法
+        userInfoService.updateById(userInfo);
+        return Result.ok();
+    }
+    
     
     //Request URL: http://localhost/api/user/wxLogin/wxLogin/0a3tonGa1FbbnM0Bv3Ja1je1Fc0tonGB
     //Request Method: GET
