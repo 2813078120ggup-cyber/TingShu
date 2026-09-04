@@ -25,6 +25,9 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -42,16 +45,16 @@ public class SearchServiceImpl implements SearchService {
     private AlbumInfoIndexRepository albumInfoIndexRepository;
     
     // 根据专辑id实现上架
-    @Override
+    /*@Override
     public void upperAlbum(Long albumId) {
         // 1. 调用5个远程调用接口，得到返回数据
         // 1.1 根据专辑id获取专辑信息
         Result<AlbumInfo> albumInfoResult = albumInfoFeignClient.getAlbumInfo(albumId);
         AlbumInfo albumInfo = albumInfoResult.getData();
         
-        /*if (albumInfo == null) {
+        *//*if (albumInfo == null) {
             throw new GuiguException(ResultCodeEnum.DATA_ERROR);
-        }*/
+        }*//*
         Assert.notNull(albumInfo, "专辑为空");  // 断言
         
         // 1.2 从专辑信息获取三级分类id，根据三级分类id获取一级和二级分类数据
@@ -119,5 +122,96 @@ public class SearchServiceImpl implements SearchService {
         // 3. 调用AlbumInfoIndexRepository的save方法实现添加
         albumInfoIndexRepository.save(albumInfoIndex);
         
+    }*/
+    
+    @Autowired
+    private ThreadPoolExecutor threadPoolExecutor;
+    
+    // 线程池并行上传
+    @Override
+    public void upperAlbum(Long albumId) {
+        AlbumInfoIndex albumInfoIndex = new AlbumInfoIndex();
+        
+        // 根据专辑id获取专辑信息
+        CompletableFuture<AlbumInfo> completableFuture1 =
+                CompletableFuture.supplyAsync(() -> {
+                    Result<AlbumInfo> albumInfoResult = albumInfoFeignClient.getAlbumInfo(albumId);
+                    AlbumInfo albumInfo = albumInfoResult.getData();
+                    Assert.notNull(albumInfo, "专辑为空");
+                    
+                    // 封装到albumINfoIndex
+                    BeanUtils.copyProperties(albumInfo, albumInfoIndex);
+                    return albumInfo;
+                }, threadPoolExecutor);
+        
+        // 从专辑信息获取三级分类id，根据三级分类id获取一级和二级分类数据
+        // 在获取专辑信息后执行
+        CompletableFuture<Void> completableFuture2 =
+                completableFuture1.thenAcceptAsync((albumInfo) -> {
+                    // 获取3级分类id
+                    Long category3Id = albumInfo.getCategory3Id();
+                    Result<BaseCategoryView> categoryViewResult = categoryFeignClient.getCategoryView(category3Id);
+                    BaseCategoryView baseCategoryView = categoryViewResult.getData();
+                    Assert.notNull(baseCategoryView, "分类为空");
+                    
+                    // 封装到albumInfoIndex
+                    Long category1Id = baseCategoryView.getCategory1Id();
+                    Long category2Id = baseCategoryView.getCategory2Id();
+                    albumInfoIndex.setCategory1Id(category1Id);
+                    albumInfoIndex.setCategory2Id(category2Id);
+                    albumInfoIndex.setCategory3Id(category3Id);
+                    
+                }, threadPoolExecutor);
+        
+        // 根据专辑id获取四个统计数据
+        
+        
+        // 获取专辑标签数据
+        CompletableFuture<Void> completableFuture3 = CompletableFuture.runAsync(() -> {
+            Result<List<AlbumAttributeValue>> albumAttributeValueResult = albumInfoFeignClient.findAlbumAttributeValue(albumId);
+            
+            List<AlbumAttributeValue> albumAttributeValues = albumAttributeValueResult.getData();
+            if (!CollectionUtils.isEmpty(albumAttributeValues)) {
+                List<AttributeValueIndex> attributeValueIndexList = albumAttributeValues.stream().map(item -> {
+                    AttributeValueIndex attributeValueIndex = new AttributeValueIndex();
+                    BeanUtils.copyProperties(item, attributeValueIndex);
+                    return attributeValueIndex;
+                }).toList();
+                albumInfoIndex.setAttributeValueIndexList(attributeValueIndexList);
+            }
+            Assert.notNull(albumAttributeValues, "标签为空");
+        }, threadPoolExecutor);
+        
+        // 获取用户信息
+        CompletableFuture<Void> completableFuture4 = completableFuture1.thenAcceptAsync(albumInfo -> {
+            Result<UserInfoVo> userInfoResult = userInfoFeignClient.getUserInfoVo(albumInfo.getUserId());
+            UserInfoVo userInfo = userInfoResult.getData();
+            Assert.notNull(userInfo, "用户为空");
+            
+            // 封装到albumInfoIndex
+            albumInfoIndex.setAnnouncerName(userInfo.getNickname());
+        }, threadPoolExecutor);
+        
+        //  赋值初始化统计信息：
+        int playStatNum = new Random().nextInt(100000);
+        int subscribeStatNum = new Random().nextInt(100000000);
+        int buyStatNum = new Random().nextInt(10000000);
+        int commentStatNum = new Random().nextInt(1000000000);
+        albumInfoIndex.setPlayStatNum(playStatNum);
+        albumInfoIndex.setSubscribeStatNum(subscribeStatNum);
+        albumInfoIndex.setBuyStatNum(buyStatNum);
+        albumInfoIndex.setCommentStatNum(commentStatNum);
+        
+        // 等待所有 CompletableFuture 执行完成
+        CompletableFuture.allOf(completableFuture1, completableFuture2, completableFuture3, completableFuture4).join();
+        
+        // 调用方法添加到es
+        albumInfoIndexRepository.save(albumInfoIndex);
+    }
+    
+    // 根据专辑id实现下架
+    @Override
+    public void lowerAlbum(Long albumId) {
+        albumInfoIndexRepository.deleteById(albumId);
     }
 }

@@ -4,4 +4,7 @@ public interface SearchService {
     
     // 根据专辑id实现上架
     void upperAlbum(Long albumId);
+    
+    // 根据专辑id实现下架
+    void lowerAlbum(Long albumId);
 }
