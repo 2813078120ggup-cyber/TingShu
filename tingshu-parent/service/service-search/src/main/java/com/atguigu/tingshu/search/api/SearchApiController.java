@@ -1,15 +1,16 @@
 package com.atguigu.tingshu.search.api;
 
 import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.query.search.AlbumIndexQuery;
 import com.atguigu.tingshu.search.service.SearchService;
+import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @Slf4j
 @Tag(name = "搜索专辑管理")
@@ -65,6 +66,22 @@ public class SearchApiController {
         }
         //  返回数据
         return Result.ok();
+    }
+    
+    // 专辑检索接口
+    /**
+     * 根据关键词检索
+     *
+     * @param albumIndexQuery
+     * @return
+     * @throws IOException
+     */
+    @Operation(summary = "专辑搜索列表")
+    @PostMapping
+    public Result search(@RequestBody AlbumIndexQuery albumIndexQuery) throws IOException {
+        //  调用服务层方法.
+        AlbumSearchResponseVo albumSearchResponseVo = searchService.search(albumIndexQuery);
+        return Result.ok(albumSearchResponseVo);
     }
     
 }

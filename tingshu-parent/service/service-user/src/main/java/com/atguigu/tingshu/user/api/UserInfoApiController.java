@@ -35,7 +35,7 @@ public class UserInfoApiController {
         // 获取用户信息
         UserInfo userInfo = userInfoService.getById(userId);
         if (userInfo == null) {
-            return Result.fail().message("用户不存在, userId=" + userId);
+            return Result.fail();
         }
         // 创建UserInfoVo对象
         UserInfoVo userInfoVo = new UserInfoVo();

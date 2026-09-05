@@ -1,5 +1,13 @@
 package com.atguigu.tingshu.search.service.impl;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.NestedQuery;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
 import com.atguigu.tingshu.common.execption.GuiguException;
@@ -11,16 +19,21 @@ import com.atguigu.tingshu.model.album.BaseCategoryView;
 import com.atguigu.tingshu.model.search.AlbumInfoIndex;
 import com.atguigu.tingshu.model.search.AttributeValueIndex;
 import com.atguigu.tingshu.model.user.UserInfo;
+import com.atguigu.tingshu.query.search.AlbumIndexQuery;
 import com.atguigu.tingshu.search.repository.AlbumInfoIndexRepository;
 import com.atguigu.tingshu.search.service.SearchService;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
+import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
+import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -43,6 +56,8 @@ public class SearchServiceImpl implements SearchService {
     private UserInfoFeignClient userInfoFeignClient;
     @Autowired
     private AlbumInfoIndexRepository albumInfoIndexRepository;
+    @Autowired
+    private ElasticsearchClient elasticsearchClient;
     
     // 根据专辑id实现上架
     /*@Override
@@ -216,5 +231,182 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public void lowerAlbum(Long albumId) {
         albumInfoIndexRepository.deleteById(albumId);
+    }
+    
+    
+    // 根据关键词检索
+    @SneakyThrows
+    @Override
+    public AlbumSearchResponseVo search(AlbumIndexQuery albumIndexQuery) {
+        //  调用方法，构建dsl语句
+        SearchRequest request = this.buildQueryDsl(albumIndexQuery);
+        // 调用elasticsearchClient的search方法执行检索
+        SearchResponse<AlbumInfoIndex> response = elasticsearchClient.search(request, AlbumInfoIndex.class);
+        // 把最终结果封装到AlbumSearchResponseVo
+        AlbumSearchResponseVo albumSearchResponseVo = this.parseSearchResult(response);
+        // 设置当前页
+        albumSearchResponseVo.setPageSize(albumIndexQuery.getPageSize());
+        albumSearchResponseVo.setPageNo(albumIndexQuery.getPageNo());
+        long totalPages = (albumSearchResponseVo.getTotal() + albumIndexQuery.getPageSize() - 1) / albumIndexQuery.getPageSize();
+        albumSearchResponseVo.setTotalPages(totalPages);
+        return albumSearchResponseVo;
+    }
+    
+    // 把es查询返回SearchResponse封装到AlbumSearchResponseVo
+    private AlbumSearchResponseVo parseSearchResult(SearchResponse<AlbumInfoIndex> searchResponse) {
+        // 创建SearchRequest
+        /*SearchRequest.Builder requestBuilder = new SearchRequest.Builder();
+        // requestBuilder构建dsl语句
+        // requestBuilder.build()构建查询对象返回SearchRequest
+        SearchRequest searchRequest = requestBuilder.build();*/
+        //  创建对象
+        AlbumSearchResponseVo searchResponseVo = new AlbumSearchResponseVo();
+        //  private List<AlbumInfoIndexVo> list = new ArrayList<>();
+        //  private Long total;//总记录数
+        //  获取数据
+        HitsMetadata<AlbumInfoIndex> hits = searchResponse.hits();
+        //  总记录数
+        searchResponseVo.setTotal(hits.total().value());
+        //  获取数据
+        List<Hit<AlbumInfoIndex>> subHist = hits.hits();
+        //  判断
+        if (!CollectionUtils.isEmpty(subHist)) {
+            //  循环遍历.
+            List<AlbumInfoIndexVo> list = subHist.stream().map(albumInfoIndexHit -> {
+                //  创建对象
+                AlbumInfoIndexVo albumInfoIndexVo = new AlbumInfoIndexVo();
+                AlbumInfoIndex albumInfoIndex = albumInfoIndexHit.source();
+                //  进行赋值
+                BeanUtils.copyProperties(albumInfoIndex, albumInfoIndexVo);
+                //  判断用户是否根据关键词进行检索.
+                if (null != albumInfoIndexHit.highlight().get("albumTitle")) {
+                    //  获取高亮数据
+                    String albumTitle = albumInfoIndexHit.highlight().get("albumTitle").get(0);
+                    //  赋值高亮数据
+                    albumInfoIndexVo.setAlbumTitle(albumTitle);
+                }
+                //  返回数据
+                return albumInfoIndexVo;
+            }).collect(Collectors.toList());
+            //  赋值
+            searchResponseVo.setList(list);
+        }
+        //  返回数据
+        return searchResponseVo;
+    }
+    
+    // 构建查询dsl语句，最终返回查询对象
+    private SearchRequest buildQueryDsl(AlbumIndexQuery albumIndexQuery) {
+        //  检索入口： 关键词
+        String keyword = albumIndexQuery.getKeyword();
+        SearchRequest.Builder requestBuilder = new SearchRequest.Builder();
+        //  {query - bool }
+        BoolQuery.Builder boolQuery = new BoolQuery.Builder();
+        //  {query - bool - should - match}
+        //  MatchQuery.Builder matchQuery = new MatchQuery.Builder();
+        //  matchQuery.field("albumTitle").query(keyword);
+        //  boolQuery.should(f-> f.match(matchQuery.build()));
+        if (!StringUtils.isEmpty(keyword)) {
+            //  {query - bool - should - match}
+            boolQuery.should(f -> f.match(s -> s.field("albumTitle").query(keyword)));
+            boolQuery.should(f -> f.match(s -> s.field("albumIntro").query(keyword)));
+            //  高亮
+            requestBuilder.highlight(h -> h.fields("albumTitle",
+                    //                    f->f.preTags("<font color:red>").postTags("</font>")
+                    f -> f.preTags("<span style=color:red>").postTags("</span>")
+            ));
+        }
+        
+        //  入口：分类Id  复制小括号，写死右箭头，落地大括号
+        //  一级分类Id
+        Long category1Id = albumIndexQuery.getCategory1Id();
+        if (!StringUtils.isEmpty(category1Id)) {
+            boolQuery.filter(f -> f.term(s -> s.field("category1Id").value(category1Id)));
+        }
+        //  二级分类Id
+        Long category2Id = albumIndexQuery.getCategory2Id();
+        if (!StringUtils.isEmpty(category2Id)) {
+            boolQuery.filter(f -> f.term(s -> s.field("category2Id").value(category2Id)));
+        }
+        //  三级分类Id
+        Long category3Id = albumIndexQuery.getCategory3Id();
+        if (!StringUtils.isEmpty(category3Id)) {
+            boolQuery.filter(f -> f.term(s -> s.field("category3Id").value(category3Id)));
+        }
+        
+        //  根据属性Id 检索 前端传递数据的时候 属性Id:属性值Id 属性Id:属性值Id
+        List<String> attributeList = albumIndexQuery.getAttributeList();
+        //  判断集合不为空
+        if (!CollectionUtils.isEmpty(attributeList)) {
+            //  循环遍历.
+            for (String attribute : attributeList) {
+                //  需要使用 : 分割
+                String[] split = attribute.split(":");
+                //  判断
+                if (null != split && split.length == 2) {
+                    //  创建nestedQuery 对象.
+                    NestedQuery nestedQuery = NestedQuery.of(f -> f.path("attributeValueIndexList")
+                            .query(q -> q.bool(
+                                    m -> m.must(s -> s.match(
+                                                    a -> a.field("attributeValueIndexList.attributeId").query(split[0])
+                                            ))
+                                            .must(s -> s.match(
+                                                    a -> a.field("attributeValueIndexList.valueId").query(split[1])
+                                            ))
+                            ))
+                    );
+                    boolQuery.filter(f -> f.nested(nestedQuery));
+                }
+            }
+        }
+        
+        //  排序 分页 高亮 排序（综合排序[1:desc] 播放量[2:desc] 发布时间[3:desc]；asc:升序 desc:降序）
+        String order = albumIndexQuery.getOrder();
+        //  定义一个排序字段
+        String orderField = "";
+        //  定义一个排序规则
+        String sort = "";
+        //  判断
+        if (!StringUtils.isEmpty(order)) {
+            //  分割数据
+            String[] split = order.split(":");
+            //  判断这个数组
+            if (null != split && split.length == 2) {
+                switch (split[0]) {
+                    case "1":
+                        orderField = "hotScore";
+                        break;
+                    case "2":
+                        orderField = "playStatNum";
+                        break;
+                    case "3":
+                        orderField = "createTime";
+                        break;
+                }
+                sort = split[1];
+            }
+            //  判断 desc SortOrder.Desc  asc SortOrder.Asc
+            String finalSort = sort;
+            String finalOrderField = orderField;
+            requestBuilder.sort(f -> f.field(o -> o.field(finalOrderField).order("asc".equals(finalSort) ? SortOrder.Asc : SortOrder.Desc)));
+        } else {
+            //  默认排序规则 _score
+            requestBuilder.sort(f -> f.field(o -> o.field("_score").order(SortOrder.Desc)));
+        }
+        //  字段选择
+        requestBuilder.source(s -> s.filter(f -> f.excludes("attributeValueIndexList")));
+        //  分页： (pageNo-1)*pageSize()
+        Integer from = (albumIndexQuery.getPageNo() - 1) * albumIndexQuery.getPageSize();
+        requestBuilder.from(from);
+        requestBuilder.size(albumIndexQuery.getPageSize());
+        
+        //  {query }
+        //  GET /albuminfo/_search
+        requestBuilder.index("albuminfo").query(f -> f.bool(boolQuery.build()));
+        //  创建对象
+        SearchRequest searchRequest = requestBuilder.build();
+        System.out.println("dsl:\t" + searchRequest.toString());
+        //  返回
+        return searchRequest;
     }
 }
