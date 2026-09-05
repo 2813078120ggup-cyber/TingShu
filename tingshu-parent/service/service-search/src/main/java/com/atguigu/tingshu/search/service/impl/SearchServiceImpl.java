@@ -184,9 +184,12 @@ public class SearchServiceImpl implements SearchService {
         
         // 获取用户信息
         CompletableFuture<Void> completableFuture4 = completableFuture1.thenAcceptAsync(albumInfo -> {
-            Result<UserInfoVo> userInfoResult = userInfoFeignClient.getUserInfoVo(albumInfo.getUserId());
+            Long userId = albumInfo.getUserId();
+            log.info("获取用户信息, albumId: {}, userId: {}", albumId, userId);
+            Result<UserInfoVo> userInfoResult = userInfoFeignClient.getUserInfoVo(userId);
+            log.info("用户信息返回: code={}, message={}, data={}", userInfoResult.getCode(), userInfoResult.getMessage(), userInfoResult.getData());
             UserInfoVo userInfo = userInfoResult.getData();
-            Assert.notNull(userInfo, "用户为空");
+            Assert.notNull(userInfo, "用户为空, userId=" + userId);
             
             // 封装到albumInfoIndex
             albumInfoIndex.setAnnouncerName(userInfo.getNickname());

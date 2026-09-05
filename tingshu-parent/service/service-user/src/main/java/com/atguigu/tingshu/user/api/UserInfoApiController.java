@@ -34,6 +34,9 @@ public class UserInfoApiController {
     public Result<UserInfoVo> getUserInfoVo(@PathVariable Long userId) {
         // 获取用户信息
         UserInfo userInfo = userInfoService.getById(userId);
+        if (userInfo == null) {
+            return Result.fail().message("用户不存在, userId=" + userId);
+        }
         // 创建UserInfoVo对象
         UserInfoVo userInfoVo = new UserInfoVo();
         // 复制属性
