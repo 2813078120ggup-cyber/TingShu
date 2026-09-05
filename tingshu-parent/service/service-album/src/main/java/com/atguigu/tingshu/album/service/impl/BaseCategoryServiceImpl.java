@@ -3,10 +3,8 @@ package com.atguigu.tingshu.album.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.tingshu.album.mapper.*;
 import com.atguigu.tingshu.album.service.BaseCategoryService;
-import com.atguigu.tingshu.model.album.BaseAttribute;
-import com.atguigu.tingshu.model.album.BaseCategory1;
-import com.atguigu.tingshu.model.album.BaseCategory2;
-import com.atguigu.tingshu.model.album.BaseCategoryView;
+import com.atguigu.tingshu.model.album.*;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -124,5 +122,21 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
     @Override
     public BaseCategoryView getCategoryViewByCategory3Id(Long category3Id) {
         return baseCategoryViewMapper.selectById(category3Id);
+    }
+    
+    
+    // 根据一级分类id查询置顶频道页的三级分类列表
+    @Override
+    public List<BaseCategory3> findTopBaseCategory3ByCategory1Id(Long category1Id) {
+        //	select * from base_category3 where base_category3.category2_id in (101,102,103) and is_top = 1 limit 7;
+        //	先根据一级分类Id 找到二级分类集合
+        LambdaQueryWrapper<BaseCategory2> baseCategory2LambdaQueryWrapper = new LambdaQueryWrapper<>();
+        baseCategory2LambdaQueryWrapper.eq(BaseCategory2::getCategory1Id, category1Id);
+        List<BaseCategory2> baseCategory2List = baseCategory2Mapper.selectList(baseCategory2LambdaQueryWrapper);
+        List<Long> category2IdList = baseCategory2List.stream().map(BaseCategory2::getId).collect(Collectors.toList());
+        //	查询置顶消息，每页显示7条数据；
+        LambdaQueryWrapper<BaseCategory3> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(BaseCategory3::getCategory2Id, category2IdList).eq(BaseCategory3::getIsTop, 1).last(" limit 7");
+        return baseCategory3Mapper.selectList(wrapper);
     }
 }

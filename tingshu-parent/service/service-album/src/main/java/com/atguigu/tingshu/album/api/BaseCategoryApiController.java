@@ -6,6 +6,7 @@ import com.atguigu.tingshu.album.service.BaseCategoryService;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.model.album.BaseAttribute;
 import com.atguigu.tingshu.model.album.BaseCategory1;
+import com.atguigu.tingshu.model.album.BaseCategory3;
 import com.atguigu.tingshu.model.album.BaseCategoryView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -72,7 +73,22 @@ public class BaseCategoryApiController {
         return Result.ok(baseCategoryView);
     }
     
-    
+    // Request URL: http://localhost/api/album/category/findTopBaseCategory3/1
+    //Request Method: GET
+    /**
+     * 根据一级分类Id 查询置顶频道页的三级分类列表
+     *
+     * @param category1Id
+     * @return
+     */
+    @Operation(summary = "获取一级分类下置顶到频道页的三级分类列表")
+    @GetMapping("findTopBaseCategory3/{category1Id}")
+    public Result<List<BaseCategory3>> findTopBaseCategory3(@PathVariable Long category1Id) {
+        //	获取三级分类列表
+        List<BaseCategory3> baseCategory3List = baseCategoryService.findTopBaseCategory3ByCategory1Id(category1Id);
+        //	返回数据
+        return Result.ok(baseCategory3List);
+    }
     
     
 }
