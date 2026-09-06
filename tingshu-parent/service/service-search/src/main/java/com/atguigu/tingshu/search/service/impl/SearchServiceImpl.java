@@ -9,23 +9,28 @@ import co.elastic.clients.elasticsearch._types.query_dsl.NestedQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermsQueryField;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.CompletionSuggest;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import com.alibaba.fastjson.JSON;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.result.ResultCodeEnum;
+import com.atguigu.tingshu.common.util.PinYinUtils;
 import com.atguigu.tingshu.model.album.AlbumAttributeValue;
 import com.atguigu.tingshu.model.album.AlbumInfo;
 import com.atguigu.tingshu.model.album.BaseCategory3;
 import com.atguigu.tingshu.model.album.BaseCategoryView;
 import com.atguigu.tingshu.model.search.AlbumInfoIndex;
 import com.atguigu.tingshu.model.search.AttributeValueIndex;
+import com.atguigu.tingshu.model.search.SuggestIndex;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.query.search.AlbumIndexQuery;
 import com.atguigu.tingshu.search.repository.AlbumInfoIndexRepository;
+import com.atguigu.tingshu.search.repository.SuggestIndexRepository;
 import com.atguigu.tingshu.search.service.SearchService;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
 import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
@@ -35,6 +40,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.elasticsearch.core.suggest.Completion;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -62,6 +68,8 @@ public class SearchServiceImpl implements SearchService {
     private AlbumInfoIndexRepository albumInfoIndexRepository;
     @Autowired
     private ElasticsearchClient elasticsearchClient;
+    @Autowired
+    private SuggestIndexRepository suggestIndexRepository;
     
     // 根据专辑id实现上架
     /*@Override
@@ -229,6 +237,15 @@ public class SearchServiceImpl implements SearchService {
         
         // 调用方法添加到es
         albumInfoIndexRepository.save(albumInfoIndex);
+        
+        // 添加数据到suggestinfo索引库，后面实现自动补全功能
+        SuggestIndex suggestIndex = new SuggestIndex();
+        suggestIndex.setId(UUID.randomUUID().toString().replaceAll("-", ""));
+        suggestIndex.setTitle(albumInfoIndex.getAlbumTitle());
+        suggestIndex.setKeyword(new Completion(new String[]{albumInfoIndex.getAlbumTitle()}));
+        suggestIndex.setKeywordPinyin(new Completion(new String[]{PinYinUtils.toHanyuPinyin(albumInfoIndex.getAlbumTitle())}));
+        suggestIndex.setKeywordSequence(new Completion(new String[]{PinYinUtils.getFirstLetter(albumInfoIndex.getAlbumTitle())}));
+        this.suggestIndexRepository.save(suggestIndex);
     }
     
     // 根据专辑id实现下架
@@ -470,5 +487,84 @@ public class SearchServiceImpl implements SearchService {
         });
         //  返回数据
         return result;
+    }
+    
+    
+    //  自动补全
+    
+    @Override
+    public List<String> completeSuggest(String keyword) {
+        //  Java 动态生成dsl 语句.
+        SearchRequest.Builder searchRequest = new SearchRequest.Builder();
+        searchRequest.index("suggestinfo").suggest(
+                s -> s.suggesters("suggestionKeyword", f -> f.prefix(keyword).completion(
+                                c -> c.field("keyword").skipDuplicates(true).size(10)
+                                        .fuzzy(
+                                                z -> z.fuzziness("auto"))
+                        ))
+                        .suggesters("suggestionkeywordPinyin", f -> f.prefix(keyword).completion(
+                                c -> c.field("keywordPinyin").skipDuplicates(true).size(10)
+                                        .fuzzy(z -> z.fuzziness("auto"))
+                        ))
+                        .suggesters("suggestionkeywordSequence", f -> f.prefix(keyword).completion(
+                                c -> c.field("keywordSequence").skipDuplicates(true).size(10)
+                                        .fuzzy(z -> z.fuzziness("auto"))
+                        ))
+        );
+        //  获取查询结果
+        SearchResponse<SuggestIndex> searchResponse = null;
+        try {
+            searchResponse = elasticsearchClient.search(searchRequest.build(), SuggestIndex.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        //  获取到结果集,数据转换. set集合无序不重复? 1.hashCode(); 2.equals();   为什么 底层hashMap !map.key=value map.value=new Object();
+        HashSet<String> titleSet = new HashSet<>();
+        titleSet.addAll(this.parseResultData(searchResponse, "suggestionKeyword"));
+        titleSet.addAll(this.parseResultData(searchResponse, "suggestionkeywordPinyin"));
+        titleSet.addAll(this.parseResultData(searchResponse, "suggestionkeywordSequence"));
+        
+        //  判断：
+        if (titleSet.size() < 10) {
+            //  使用查询数据的方式来填充集合数据，让这个提示信息够10条数据.
+            SearchResponse<SuggestIndex> response = null;
+            try {
+                response = elasticsearchClient.search(s -> s.index("suggestinfo")
+                                .query(f -> f.match(m -> m.field("title").query(keyword)))
+                        , SuggestIndex.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            //  从查询结果集中获取数据
+            for (Hit<SuggestIndex> hit : response.hits().hits()) {
+                //  获取数据结果
+                SuggestIndex suggestIndex = hit.source();
+                //  获取titile
+                titleSet.add(suggestIndex.getTitle());
+                //  判断当前这个结合的长度.
+                if (titleSet.size() == 10) {
+                    break;
+                }
+            }
+        }
+        //  返回数据
+        return new ArrayList<>(titleSet);
+    }
+    
+    // 处理聚合结果集
+    
+    private Collection<String> parseResultData(SearchResponse<SuggestIndex> searchResponse, String suggestionKeyword) {
+        //  创建集合
+        List<String> suggestList = new ArrayList<>();
+        Map<String, List<Suggestion<SuggestIndex>>> groupBySuggestionListAggMap = searchResponse.suggest();
+        groupBySuggestionListAggMap.get(suggestionKeyword).forEach(item -> {
+            CompletionSuggest<SuggestIndex> completionSuggest = item.completion();
+            completionSuggest.options().forEach(it -> {
+                SuggestIndex suggestIndex = it.source();
+                suggestList.add(suggestIndex.getTitle());
+            });
+        });
+        //  返回集合列表
+        return suggestList;
     }
 }

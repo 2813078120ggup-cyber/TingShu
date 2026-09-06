@@ -19,4 +19,7 @@ public interface SearchService {
     
     // 根据一级分类Id获取数据
     List<Map<String, Object>> channel(Long category1Id);
+    
+    // 自动补全
+    List<String> completeSuggest(String keyword);
 }
