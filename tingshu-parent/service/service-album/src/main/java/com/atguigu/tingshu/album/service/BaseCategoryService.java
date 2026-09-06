@@ -21,4 +21,7 @@ public interface BaseCategoryService extends IService<BaseCategory1> {
     
     // 根据一级分类id查询置顶频道页的三级分类列表
     List<BaseCategory3> findTopBaseCategory3ByCategory1Id(Long category1Id);
+    
+    // 根据一级分类Id 获取全部数据
+    JSONObject getAllCategoryList(Long category1Id);
 }

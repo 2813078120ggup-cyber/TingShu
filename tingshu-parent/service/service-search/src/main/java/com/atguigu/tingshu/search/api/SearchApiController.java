@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "搜索专辑管理")
@@ -69,6 +71,7 @@ public class SearchApiController {
     }
     
     // 专辑检索接口
+    
     /**
      * 根据关键词检索
      *
@@ -82,6 +85,26 @@ public class SearchApiController {
         //  调用服务层方法.
         AlbumSearchResponseVo albumSearchResponseVo = searchService.search(albumIndexQuery);
         return Result.ok(albumSearchResponseVo);
+    }
+    
+    
+    // Request URL: http://localhost/api/search/albumInfo/channel/1
+    // Request Method: GET
+    
+    /**
+     * 根据一级分类Id获取数据
+     *
+     * @param category1Id
+     * @return
+     */
+    @Operation(summary = "获取频道页数据")
+    @GetMapping("channel/{category1Id}")
+    public Result channel(@PathVariable Long category1Id) {
+        
+        //  调用服务层方法
+        List<Map<String, Object>> mapList = null;
+        mapList = searchService.channel(category1Id);
+        return Result.ok(mapList);
     }
     
 }

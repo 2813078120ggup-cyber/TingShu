@@ -136,7 +136,55 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
         List<Long> category2IdList = baseCategory2List.stream().map(BaseCategory2::getId).collect(Collectors.toList());
         //	查询置顶消息，每页显示7条数据；
         LambdaQueryWrapper<BaseCategory3> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(BaseCategory3::getCategory2Id, category2IdList).eq(BaseCategory3::getIsTop, 1).last(" limit 7");
+        wrapper.in(BaseCategory3::getCategory2Id, category2IdList).eq(BaseCategory3::getIsTop, 1).last("limit 7");
         return baseCategory3Mapper.selectList(wrapper);
+    }
+    
+    // 根据一级分类Id 获取全部数据
+    
+    @Override
+    public JSONObject getAllCategoryList(Long category1Id) {
+        // 1. 根据一级分类id查询一级分类数据
+        BaseCategory1 baseCategory1 = baseCategory1Mapper.selectById(category1Id);
+        // 声明一级分类对象
+        JSONObject category1 = new JSONObject();
+        category1.put("categoryId", category1Id);
+        category1.put("categoryName", baseCategory1.getName());
+        
+        // 根据一级分类id查询下面所有二级和三级数据，查询视图
+        LambdaQueryWrapper<BaseCategoryView> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(BaseCategoryView::getCategory1Id, category1Id);
+        List<BaseCategoryView> baseCategoryViewList = baseCategoryViewMapper.selectList(lambdaQueryWrapper);
+        
+        // 3. 将查询结果进行分组，返回map集合
+        // key: 二级分类id   value: 该二级分类下面所有三级分类数据
+        Map<Long, List<BaseCategoryView>> category2Map =
+                baseCategoryViewList.stream()
+                        .collect(Collectors.groupingBy(BaseCategoryView::getCategory2Id));
+        // 4. 遍历map集合，封装二级分类数据，最终把二级集合放到一级分类里面
+        List<JSONObject> category2Child = new ArrayList<>();
+        category2Map.forEach((k, v) -> {
+            Long category2Id = k;
+            List<BaseCategoryView> category3List = v;
+            // 封装二级分类数据
+            JSONObject category2 = new JSONObject();
+            category2.put("categoryId", category2Id);
+            category2.put("categoryName", category3List.get(0).getCategory2Name());
+            // 将多个二级分类放到集合里
+            category2Child.add(category2);
+            // 5. 封装三级，将三级放到二级里
+            List<JSONObject> category3Child = new ArrayList<>();
+            category3List.stream().forEach(category3View -> {
+                JSONObject category3 = new JSONObject();
+                category3.put("categoryId", category3View.getCategory3Id());
+                category3.put("categoryName", category3View.getCategory3Name());
+                category3Child.add(category3);
+            });
+            category2.put("categoryChild", category3Child);
+        });
+        // 将二级数据list集合放到一级分类里
+        category1.put("categoryChild", category2Child);
+        
+        return category1;
     }
 }
