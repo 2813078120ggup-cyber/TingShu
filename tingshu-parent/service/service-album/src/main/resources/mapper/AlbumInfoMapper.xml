@@ -34,5 +34,18 @@
         group by album.id
         order by album.id desc
     </select>
+
+    <!--根据专辑Id 获取到统计数据-->
+    <select id="selectAlbumStat" resultType="com.atguigu.tingshu.vo.album.AlbumStatVo">
+        select stat.album_id,
+               max(if(stat.stat_type = '0401', stat.stat_num, 0)) playStatNum,
+               max(if(stat.stat_type = '0402', stat.stat_num, 0)) subscribeStatNum,
+               max(if(stat.stat_type = '0403', stat.stat_num, 0)) buyStatNum,
+               max(if(stat.stat_type = '0404', stat.stat_num, 0)) commentStatNum
+        from album_stat stat
+        where album_id = #{albumId}
+          and stat.is_deleted = 0
+        group by stat.album_id
+    </select>
 </mapper>
 
