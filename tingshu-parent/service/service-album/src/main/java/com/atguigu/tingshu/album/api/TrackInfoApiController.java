@@ -7,6 +7,7 @@ import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.query.album.TrackInfoQuery;
+import com.atguigu.tingshu.vo.album.AlbumTrackListVo;
 import com.atguigu.tingshu.vo.album.TrackInfoVo;
 import com.atguigu.tingshu.vo.album.TrackListVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -170,6 +171,27 @@ public class TrackInfoApiController {
         //	调用服务层方法
         trackInfoService.updateTrackInfo(id, trackInfoVo);
         return Result.ok();
+    }
+    
+    // 获取专辑声音分页列表
+    @TingShuLogin(required = false)  // 不登录也可以看见
+    @Operation(summary = "获取专辑声音分页列表")
+    @GetMapping("findAlbumTrackPage/{albumId}/{page}/{limit}")
+    public Result<IPage<AlbumTrackListVo>> findAlbumTrackPage(
+            @Parameter(name = "albumId", description = "专辑id", required = true)
+            @PathVariable Long albumId,
+            @Parameter(name = "page", description = "当前页码", required = true)
+            @PathVariable Long page,
+            @Parameter(name = "limit", description = "每页记录数", required = true)
+            @PathVariable Long limit) {
+        //	获取用户Id
+        Long userId = AuthContextHolder.getUserId();
+        //	构建分页对象
+        Page<AlbumTrackListVo> pageParam = new Page<>(page, limit);
+        //	调用服务层方法
+        IPage<AlbumTrackListVo> pageModel = trackInfoService.findAlbumTrackPage(pageParam, albumId, userId);
+        //	返回数据
+        return Result.ok(pageModel);
     }
 }
 

@@ -43,5 +43,31 @@
         group by track.id
         order by track.id desc
     </select>
+
+
+    <!--根据专辑id分页查询声音数据-->
+    <select id="selectAlbumTrackPage" resultType="com.atguigu.tingshu.vo.album.AlbumTrackListVo">
+        select info.trackId,
+               info.trackTitle,
+               info.mediaDuration,
+               info.orderNum,
+               info.createTime,
+               MAX(IF(info.statType = '0701', info.statNum, 0)) as playStatNum,
+               MAX(IF(info.statType = '0704', info.statNum, 0)) as commentStatNum
+        from (select track.id             as trackId,
+                     track.track_title    as trackTitle,
+                     track.media_duration as mediaDuration,
+                     track.order_num      as orderNum,
+                     track.create_time    as createTime,
+                     stat.stat_type       as statType,
+                     stat.stat_num        as statNum
+              from track_info track
+                       left join track_stat stat on stat.track_id = track.id
+              where track.album_id = #{albumId}
+                and track.is_open = '1'
+                and track.status = '0501') info
+        group by info.trackId
+        order by info.orderNum asc
+    </select>
 </mapper>
 
