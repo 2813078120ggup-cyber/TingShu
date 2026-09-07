@@ -25,4 +25,7 @@ public interface TrackInfoService extends IService<TrackInfo> {
     
     // 查询专辑声音分页列表
     IPage<AlbumTrackListVo> findAlbumTrackPage(Page<AlbumTrackListVo> pageParam, Long albumId, Long userId);
+    
+    // 更新声音播放量
+    void updateStat(Long albumId, Long trackId, String statType, Integer count);
 }

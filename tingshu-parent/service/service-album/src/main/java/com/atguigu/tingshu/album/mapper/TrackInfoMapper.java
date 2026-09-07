@@ -21,4 +21,7 @@ public interface TrackInfoMapper extends BaseMapper<TrackInfo> {
     
     // 分页查询专辑声音列表
     IPage<AlbumTrackListVo> selectAlbumTrackPage(Page<AlbumTrackListVo> pageParam, Long albumId);
+    
+    // 更新声音播放量
+    void updateStat(Long trackId, String statType, Integer count);
 }

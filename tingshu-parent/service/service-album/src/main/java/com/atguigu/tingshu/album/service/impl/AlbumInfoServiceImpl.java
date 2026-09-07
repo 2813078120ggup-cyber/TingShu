@@ -307,4 +307,10 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     public AlbumStatVo getAlbumStatVoByAlbumId(Long albumId) {
         return albumInfoMapper.selectAlbumStat(albumId);
     }
+    
+    // 更新统计信息
+    @Override
+    public void updateStat(Long albumId, String albumStatPlay, Integer count) {
+        albumInfoMapper.updateStat(albumId, albumStatPlay, count);
+    }
 }

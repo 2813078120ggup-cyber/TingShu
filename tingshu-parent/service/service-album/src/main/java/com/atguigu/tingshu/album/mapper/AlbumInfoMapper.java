@@ -18,4 +18,7 @@ public interface AlbumInfoMapper extends BaseMapper<AlbumInfo> {
     
     // 根据专辑Id 获取到统计信息
     AlbumStatVo selectAlbumStat(Long albumId);
+    
+    // 更新统计信息
+    void updateStat(Long albumId, String albumStatPlay, Integer count);
 }

@@ -47,5 +47,13 @@
           and stat.is_deleted = 0
         group by stat.album_id
     </select>
+
+    <!--更新统计信息-->
+    <update id="updateStat">
+        update album_stat
+        set stat_num = stat_num + #{count}
+        where album_id = #{albumId}
+          and stat_type = #{albumStatPlay}
+    </update>
 </mapper>
 

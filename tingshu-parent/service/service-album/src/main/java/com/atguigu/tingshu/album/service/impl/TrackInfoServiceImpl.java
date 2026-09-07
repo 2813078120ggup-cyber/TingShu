@@ -298,4 +298,16 @@ public class TrackInfoServiceImpl extends ServiceImpl<TrackInfoMapper, TrackInfo
         // 返回集合数据
         return pageInfo;
     }
+    
+    // 更新声音播放量
+    @Transactional
+    @Override
+    public void updateStat(Long albumId, Long trackId, String statType, Integer count) {
+        //	更新声音播放量
+        trackInfoMapper.updateStat(trackId, statType, count);
+        //	更新专辑播放量
+        if (statType.equals(SystemConstant.TRACK_STAT_PLAY)) {
+            albumInfoService.updateStat(albumId, SystemConstant.ALBUM_STAT_PLAY, count);
+        }
+    }
 }

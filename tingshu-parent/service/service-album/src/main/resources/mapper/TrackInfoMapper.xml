@@ -12,6 +12,7 @@
           and order_num > #{orderNum}
           and is_deleted = 0
     </update>
+
     <select id="selectUserTrackPage" resultType="com.atguigu.tingshu.vo.album.TrackListVo">
         select album.id as albumId,
         album.album_title,
@@ -69,5 +70,13 @@
         group by info.trackId
         order by info.orderNum asc
     </select>
+
+    <!--更新声音播放量-->
+    <update id="updateStat">
+        update track_stat
+        set stat_num = stat_num + #{count}
+        where track_id = #{trackId}
+          and stat_type = #{statType}
+    </update>
 </mapper>
 
