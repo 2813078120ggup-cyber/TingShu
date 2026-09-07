@@ -35,38 +35,30 @@ public class TingShuLoginAspect {
     @Around("execution(* com.atguigu.tingshu.*.api.*.*(..)) && @annotation(tingShuLogin)")
     
     public Object login(ProceedingJoinPoint joinPoint, TingShuLogin tingShuLogin) throws Throwable {
-        // RequestContextHolder 上下文对象 获取request
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        ServletRequestAttributes sra = (ServletRequestAttributes) requestAttributes;
-        HttpServletRequest request = sra.getRequest();
-        // 1. 从请求头获取token（前端传递）
-        String token = request.getHeader("token");
-        
-        
-        // 2. 根据token查询redis（redis的key是token），如果可以查询到是登录，查询不到则未登录
-        // required==true 必须登录  required==false 可以不登录
-        boolean isRequired = tingShuLogin.required();
-        if (isRequired) {
-            // 必须登录
-            // 判断请求头中token是否为空，如果为空返回信息
-            if (!StringUtils.hasText(token)) {
+        // 请求线程会被复用，先清理可能残留的用户身份。
+        AuthContextHolder.removeUserId();
+        try {
+            RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes sra = (ServletRequestAttributes) requestAttributes;
+            HttpServletRequest request = sra.getRequest();
+            String token = request.getHeader("token");
+
+            // 可选登录也需要识别有效 token，required 只决定是否允许游客访问。
+            UserInfo userInfo = null;
+            if (StringUtils.hasText(token)) {
+                userInfo = (UserInfo) redisTemplate.opsForValue()
+                        .get(RedisConstant.USER_LOGIN_KEY_PREFIX + token);
+            }
+            if (userInfo != null && userInfo.getId() != null) {
+                AuthContextHolder.setUserId(userInfo.getId());
+            } else if (tingShuLogin.required()) {
                 throw new GuiguException(ResultCodeEnum.LOGIN_AUTH);
             }
-            // 如果token不为空，根据token查询redis，判断查询数据是否为空，如果为空，返回登录提示
-            UserInfo userInfo = (UserInfo) redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN_KEY_PREFIX + token);
-            // 如果为空，返回登录提示信息
-            if (userInfo == null) {
-                throw new GuiguException(ResultCodeEnum.LOGIN_AUTH);
-            }
-            
-            // 登录成功，将userId存入ThreadLocal
-            AuthContextHolder.setUserId(userInfo.getId());
-            // 登录成功后，执行方法
+
             return joinPoint.proceed();
-            
-        } else {
-            // 直接执行方法
-            return joinPoint.proceed();
+        } finally {
+            // 正常返回、鉴权失败或业务异常时都清理当前线程的用户身份。
+            AuthContextHolder.removeUserId();
         }
     }
 }
