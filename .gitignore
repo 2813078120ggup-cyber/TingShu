@@ -40,3 +40,7 @@ id_ed25519
 # Original Nacos exports contain local credentials; keep them on this machine.
 # Publish only the sanitized templates under config/nacos/DEFAULT_GROUP/.
 /tingshu-parent/资料/DEFAULT_GROUP/
+
+/service/service-album/src/main/java/com/atguigu/tingshu/album/controller/TestController.java
+/service/service-album/src/main/java/com/atguigu/tingshu/album/service/TestService.java
+/service/service-album/src/main/java/com/atguigu/tingshu/album/service/impl/TestServiceImpl.java
