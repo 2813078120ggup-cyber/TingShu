@@ -13,6 +13,7 @@ import org.bson.types.ObjectId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -119,5 +122,29 @@ public class UserListenProcessServiceImpl implements UserListenProcessService {
             rabbitService.sendMessage(MqConst.EXCHANGE_TRACK, MqConst.ROUTING_TRACK_STAT_UPDATE, JSON.toJSONString(trackStatMqVo));
             log.info("播放量MQ消息已发送：{}", JSON.toJSONString(trackStatMqVo));
         }
+    }
+    
+    // 获取最近一次播放声音
+    @Override
+    public Map<String, Object> getLatelyTrack(Long userId) {
+        // 根据用户Id 查询数据
+        Query query = Query.query(Criteria.where("userId").is(userId));
+        // 按照更新时间做降序排列
+        Sort sort = Sort.by(Sort.Direction.DESC, "updateTime");
+        query.with(sort);
+        // 按照条件查询数据并返回结果
+        UserListenProcess userListenProcess = mongoTemplate.findOne(query,
+                UserListenProcess.class,
+                MongoUtil.getCollectionName(MongoUtil.MongoCollectionEnum.USER_LISTEN_PROCESS, userId));
+        if (null == userListenProcess) {
+            return null;
+        }
+        // 声明一个map 集合
+        Map<String, Object> map = new HashMap<>();
+        // 存储数据
+        map.put("albumId", userListenProcess.getAlbumId());
+        map.put("trackId", userListenProcess.getTrackId());
+        // 返回数据
+        return map;
     }
 }
