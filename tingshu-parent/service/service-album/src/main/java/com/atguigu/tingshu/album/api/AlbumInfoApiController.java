@@ -88,7 +88,7 @@ public class AlbumInfoApiController {
     //Request Method: GET
     @GetMapping("getAlbumInfo/{albumId}")
     public Result<AlbumInfo> getAlbumInfo(@PathVariable Long albumId) {
-        AlbumInfo albumInfo = albumInfoService.getAlbumInfo(albumId);
+        AlbumInfo albumInfo = albumInfoService.getAlbumInfoById(albumId);
         return Result.ok(albumInfo);
     }
     

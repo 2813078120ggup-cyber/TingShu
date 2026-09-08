@@ -6,6 +6,7 @@ import com.atguigu.tingshu.album.mapper.AlbumStatMapper;
 import com.atguigu.tingshu.album.mapper.TrackInfoMapper;
 import com.atguigu.tingshu.album.service.AlbumAttributeValueService;
 import com.atguigu.tingshu.album.service.AlbumInfoService;
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.rabbit.constant.MqConst;
@@ -26,12 +27,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,6 +55,8 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     private TrackInfoMapper trackInfoMapper;
     @Autowired
     private RabbitService rabbitService;
+    @Autowired
+    private RedisTemplate redisTemplate;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -256,6 +264,75 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
         albumInfo.setAlbumAttributeValueVoList(albumAttributeValueList);
         return albumInfo;
     }
+    
+    
+    // 修改：根据id查询专辑信息
+    @Override
+    public AlbumInfo getAlbumInfoById(Long albumId) {
+        //	创建专辑对象
+        AlbumInfo albumInfo = new AlbumInfo();
+        //	声明缓存key
+        String albumKey = RedisConstant.ALBUM_INFO_PREFIX + albumId;
+        try {
+            albumInfo = (AlbumInfo) redisTemplate.opsForValue().get(albumKey);
+            if (null == albumInfo) {
+                //	查询数据库
+                String albumLockKey = RedisConstant.ALBUM_INFO_PREFIX + albumId + ":lock";
+                //	声明一个uuid
+                String uuid = UUID.randomUUID().toString();
+                Boolean result = this.redisTemplate.opsForValue().setIfAbsent(
+                        albumLockKey,
+                        uuid,
+                        RedisConstant.ALBUM_LOCK_EXPIRE_PX1,
+                        TimeUnit.SECONDS);
+                if (result) {
+                    try {
+                        //	获取到锁
+                        albumInfo = albumInfo = albumInfoMapper.selectById(albumId);
+                        if (null == albumInfo) {
+                            //	设置控制存储到缓存
+                            AlbumInfo albumInfo1 = new AlbumInfo();
+                            redisTemplate.opsForValue().set(albumKey, albumInfo1, RedisConstant.ALBUM_TEMPORARY_TIMEOUT, TimeUnit.SECONDS);
+                            return albumInfo1;
+                        }
+                        //	将数据写入缓存
+                        redisTemplate.opsForValue().set(albumKey, albumInfo, RedisConstant.ALBUM_TIMEOUT, TimeUnit.SECONDS);
+                        return albumInfo;
+                    } finally {
+                        //	使用lua脚本删除锁
+                        delRedisKey(albumLockKey, uuid);
+                    }
+                } else {
+                    //	没有获取到锁的线程，自旋
+                    return getAlbumInfoById(albumId);
+                }
+            } else {
+                //	缓存不为空，直接返回数据
+                return albumInfo;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //	如果有异常，最后查询数据库
+        return albumInfoMapper.selectById(albumId);
+    }
+    
+    //  删除缓存的key
+    private void delRedisKey(String albumLockKey, String uuid) {
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+        //4.2设置脚本文本
+        String script = "if redis.call(\"get\",KEYS[1]) == ARGV[1]\n" +
+                "then\n" +
+                "    return redis.call(\"del\",KEYS[1])\n" +
+                "else\n" +
+                "    return 0\n" +
+                "end";
+        redisScript.setScriptText(script);
+        //4.3 设置响应类型
+        redisScript.setResultType(Long.class);
+        redisTemplate.execute(redisScript, Arrays.asList(albumLockKey), uuid);
+    }
+    
     
     // 修改专辑信息
     @Override
