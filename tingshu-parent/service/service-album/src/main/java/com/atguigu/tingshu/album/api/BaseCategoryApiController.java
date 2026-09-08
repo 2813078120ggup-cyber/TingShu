@@ -94,6 +94,7 @@ public class BaseCategoryApiController {
     
     //Request URL: http://localhost/api/album/category/getBaseCategoryList/1
     //Request Method: GET
+    
     /**
      * 根据一级分类Id 获取全部数据
      *
@@ -105,6 +106,20 @@ public class BaseCategoryApiController {
     public Result<JSONObject> getBaseCategoryList(@PathVariable Long category1Id) {
         JSONObject jsonObject = baseCategoryService.getAllCategoryList(category1Id);
         return Result.ok(jsonObject);
+    }
+    
+    
+    /**
+     * 查询所有的一级分类数据
+     *
+     * @return
+     */
+    @Operation(summary = "查询所有的一级分类信息")
+    @GetMapping("findAllCategory1")
+    public Result<List<BaseCategory1>> findAllCategory1() {
+        //	获取所有的一级分类数据
+        List<BaseCategory1> baseCategory1List = baseCategoryService.findAllCategory1();
+        return Result.ok(baseCategory1List);
     }
 }
 

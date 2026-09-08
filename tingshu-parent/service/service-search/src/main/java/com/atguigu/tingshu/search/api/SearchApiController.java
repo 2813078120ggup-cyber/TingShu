@@ -3,11 +3,17 @@ package com.atguigu.tingshu.search.api;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.query.search.AlbumIndexQuery;
 import com.atguigu.tingshu.search.service.SearchService;
+import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
 import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -23,6 +29,47 @@ public class SearchApiController {
     
     @Autowired
     private SearchService searchService;
+    
+    // Request URL: http://localhost/api/search/albumInfo/findRankingList/1/hotScore
+    //Request Method: GET
+    /**
+     * 获取排行榜列表
+     *
+     * @param category1Id
+     * @param dimension
+     * @return
+     */
+    @Operation(summary = "获取排行榜列表")
+    @Parameters({
+            @Parameter(name = "category1Id", description = "一级分类", in = ParameterIn.PATH, required = true),
+            @Parameter(name = "dimension", description = "热度:hotScore、播放量:playStatNum、订阅量:subscribeStatNum、购买量:buyStatNum、评论数:albumCommentStatNum", required = true, in = ParameterIn.PATH),
+    })
+    @GetMapping("findRankingList/{category1Id}/{dimension}")
+    public Result<List<AlbumInfoIndexVo>> findRankingList(@PathVariable Long category1Id, @PathVariable String dimension) {
+        //  调用服务层方法
+        List<AlbumInfoIndexVo> infoIndexVoList = searchService.findRankingList(category1Id, dimension);
+        //  返回结果集
+        return Result.ok(infoIndexVoList);
+    }
+    
+    
+    
+    /**
+     * 更新排行榜
+     *
+     * @return
+     */
+    @SneakyThrows
+    @Operation(summary = "更新排行榜")
+    @GetMapping("updateLatelyAlbumRanking")
+    //@Scheduled(cron = "0 0 */1 * * ?")
+    public Result updateLatelyAlbumRanking() {
+        //  调用服务层方法
+        searchService.updateLatelyAlbumRanking();
+        //  默认返回
+        return Result.ok();
+    }
+    
     
     // 自动补全
     //Request URL: http://localhost/api/search/albumInfo/completeSuggest/%E5%B0%8F%E8%AF%B4

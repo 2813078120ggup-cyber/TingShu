@@ -24,4 +24,7 @@ public interface BaseCategoryService extends IService<BaseCategory1> {
     
     // 根据一级分类Id 获取全部数据
     JSONObject getAllCategoryList(Long category1Id);
+    
+    // 查询所有的一级分类数据
+    List<BaseCategory1> findAllCategory1();
 }

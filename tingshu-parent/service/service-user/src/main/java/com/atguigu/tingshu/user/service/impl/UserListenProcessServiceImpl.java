@@ -59,11 +59,10 @@ public class UserListenProcessServiceImpl implements UserListenProcessService {
     
     @Override
     public void updateListenProcess(Long userId, UserListenProcessVo userListenProcessVo) {
-        log.info("updateListenProcess 入口：userId={}，trackId={}，albumId={}",
-                userId, userListenProcessVo.getTrackId(), userListenProcessVo.getAlbumId());
         // 1. 查询当前用户id+声音id是否有播放进度
-        Criteria criteria = Criteria.where("userId")
-                .is(userId).and("trackId").is(userListenProcessVo.getTrackId());
+        Criteria criteria = Criteria
+                .where("userId").is(userId)
+                .and("trackId").is(userListenProcessVo.getTrackId());
         Query query = Query.query(criteria);
         UserListenProcess userListenProcess = this.mongoTemplate.findOne(query,
                 UserListenProcess.class,

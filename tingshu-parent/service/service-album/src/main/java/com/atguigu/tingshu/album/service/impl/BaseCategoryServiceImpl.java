@@ -187,4 +187,10 @@ public class BaseCategoryServiceImpl extends ServiceImpl<BaseCategory1Mapper, Ba
         
         return category1;
     }
+    
+    // 查询所有的一级分类数据
+    @Override
+    public List<BaseCategory1> findAllCategory1() {
+        return baseCategory1Mapper.selectList(null);
+    }
 }

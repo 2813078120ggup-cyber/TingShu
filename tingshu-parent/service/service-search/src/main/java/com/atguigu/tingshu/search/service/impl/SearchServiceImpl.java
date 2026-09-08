@@ -16,14 +16,12 @@ import co.elastic.clients.elasticsearch.core.search.Suggestion;
 import com.alibaba.fastjson.JSON;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
 import com.atguigu.tingshu.album.client.CategoryFeignClient;
+import com.atguigu.tingshu.common.constant.RedisConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.result.ResultCodeEnum;
 import com.atguigu.tingshu.common.util.PinYinUtils;
-import com.atguigu.tingshu.model.album.AlbumAttributeValue;
-import com.atguigu.tingshu.model.album.AlbumInfo;
-import com.atguigu.tingshu.model.album.BaseCategory3;
-import com.atguigu.tingshu.model.album.BaseCategoryView;
+import com.atguigu.tingshu.model.album.*;
 import com.atguigu.tingshu.model.search.AlbumInfoIndex;
 import com.atguigu.tingshu.model.search.AttributeValueIndex;
 import com.atguigu.tingshu.model.search.SuggestIndex;
@@ -41,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.suggest.Completion;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -70,6 +69,8 @@ public class SearchServiceImpl implements SearchService {
     private ElasticsearchClient elasticsearchClient;
     @Autowired
     private SuggestIndexRepository suggestIndexRepository;
+    @Autowired
+    private RedisTemplate redisTemplate;
     
     // 根据专辑id实现上架
     /*@Override
@@ -566,5 +567,48 @@ public class SearchServiceImpl implements SearchService {
         });
         //  返回集合列表
         return suggestList;
+    }
+    
+    //  更新排行榜
+    @Override
+    public void updateLatelyAlbumRanking() {
+        //  先获取到所有一级分类数据
+        Result<List<BaseCategory1>> baseCategory1Result = categoryFeignClient.findAllCategory1();
+        //  获取集合
+        Assert.notNull(baseCategory1Result, "一级分类结果集为空");
+        List<BaseCategory1> baseCategory1List = baseCategory1Result.getData();
+        Assert.notNull(baseCategory1List, "一级分类集合为空");
+        //  循环遍历
+        for (BaseCategory1 baseCategory1 : baseCategory1List) {
+            //  baseCategory1.getId()
+            //  Hash数据结构： hset key field value;  key=category1Id field = 热度/播放量/订阅量/ value=热度data/播放量data;
+            String[] rankingDimensionArray = new String[]{"hotScore", "playStatNum", "subscribeStatNum", "buyStatNum", "commentStatNum"};
+            //  排行榜数据从哪里来的? es 中!
+            for (String ranging : rankingDimensionArray) {
+                //  执行dsl语句 获取到结果集.
+                SearchResponse<AlbumInfoIndex> response = null;
+                try {
+                    response = elasticsearchClient.search(f -> f.index("albuminfo")
+                            .query(q -> q.term(t -> t.field("category1Id").value(baseCategory1.getId())))
+                            .sort(s -> s.field(d -> d.field(ranging).order(SortOrder.Desc)))
+                            .size(10), AlbumInfoIndex.class);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                //  获取到当前执行结果集，将数据存储到缓存：
+                List<AlbumInfoIndex> albumInfoIndexList = response.hits().hits().stream().map(Hit::source).collect(Collectors.toList());
+                //  使用hash 数据结构 hset key field value;
+                String rangKey = RedisConstant.RANKING_KEY_PREFIX + baseCategory1.getId();
+                this.redisTemplate.boundHashOps(rangKey).put(ranging, albumInfoIndexList);
+                //  this.redisTemplate.opsForHash().put(rangKey,ranging,albumInfoIndexList);
+            }
+        }
+    }
+    
+    // 获取排行榜列表
+    
+    @Override
+    public List<AlbumInfoIndexVo> findRankingList(Long category1Id, String dimension) {
+        return (List<AlbumInfoIndexVo>) redisTemplate.boundHashOps(RedisConstant.RANKING_KEY_PREFIX + category1Id).get(dimension);
     }
 }

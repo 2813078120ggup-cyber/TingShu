@@ -1,6 +1,7 @@
 package com.atguigu.tingshu.search.service;
 
 import com.atguigu.tingshu.query.search.AlbumIndexQuery;
+import com.atguigu.tingshu.vo.search.AlbumInfoIndexVo;
 import com.atguigu.tingshu.vo.search.AlbumSearchResponseVo;
 
 import java.util.List;
@@ -22,4 +23,10 @@ public interface SearchService {
     
     // 自动补全
     List<String> completeSuggest(String keyword);
+    
+    // 更新排行榜
+    void updateLatelyAlbumRanking();
+    
+    // 获取排行榜列表
+    List<AlbumInfoIndexVo> findRankingList(Long category1Id, String dimension);
 }
