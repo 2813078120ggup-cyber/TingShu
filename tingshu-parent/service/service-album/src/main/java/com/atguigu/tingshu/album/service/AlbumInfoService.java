@@ -30,6 +30,9 @@ public interface AlbumInfoService extends IService<AlbumInfo> {
     // 修改：根据id查询专辑信息
     AlbumInfo getAlbumInfoById(Long albumId);
     
+    // 使用Redisson
+    AlbumInfo getAlbumInfoRedisson(Long albumId);
+    
     // 修改专辑信息
     void updateAlbumInfo(Long albumId, AlbumInfoVo albumInfoVo);
     

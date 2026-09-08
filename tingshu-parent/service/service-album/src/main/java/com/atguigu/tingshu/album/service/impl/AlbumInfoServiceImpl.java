@@ -25,6 +25,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -57,6 +59,8 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     private RabbitService rabbitService;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private RedissonClient redissonClient;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -288,7 +292,7 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 if (result) {
                     try {
                         //	获取到锁
-                        albumInfo = albumInfo = albumInfoMapper.selectById(albumId);
+                        albumInfo = this.getAlbumInfo(albumId);
                         if (null == albumInfo) {
                             //	设置控制存储到缓存
                             AlbumInfo albumInfo1 = new AlbumInfo();
@@ -305,6 +309,67 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
                 } else {
                     //	没有获取到锁的线程，自旋
                     return getAlbumInfoById(albumId);
+                }
+            } else {
+                //	缓存不为空，直接返回数据
+                return albumInfo;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //	如果有异常，最后查询数据库
+        return albumInfoMapper.selectById(albumId);
+    }
+    
+    
+    /*---------------------------------------*/
+    // 使用Redisson
+    @Override
+    public AlbumInfo getAlbumInfoRedisson(Long albumId) {
+        //	创建专辑对象
+        AlbumInfo albumInfo = new AlbumInfo();
+        //	声明缓存key
+        String albumKey = RedisConstant.ALBUM_INFO_PREFIX + albumId;
+        try {
+            // 从redis中查询
+            albumInfo = (AlbumInfo) redisTemplate.opsForValue().get(albumKey);
+            if (null == albumInfo) {
+                // 缓存击穿问题：添加分布式锁
+                String albumLockKey = RedisConstant.ALBUM_INFO_PREFIX + albumId + ":lock";
+                // 获取锁对象
+                RLock lock = redissonClient.getLock(albumLockKey);
+                // 加锁
+                // lock:拿不到锁就一直等
+                // tryLock:拿不到可以直接返回 false，或者只等指定时间
+                // tryLock:不传递leaseTime，看门狗机制自动启动
+                // true:加锁成功  false:加锁失败，自旋
+                /*boolean result = lock.tryLock(RedisConstant.ALBUM_LOCK_EXPIRE_PX1,
+                        RedisConstant.ALBUM_LOCK_EXPIRE_PX2, TimeUnit.SECONDS);*/
+                // 使用看门狗：
+                boolean result = lock.tryLock(
+                        RedisConstant.ALBUM_LOCK_EXPIRE_PX1,
+                        TimeUnit.SECONDS);
+                if (result) {
+                    try {
+                        //	获取到锁
+                        albumInfo = this.getAlbumInfo(albumId);
+                        if (null == albumInfo) {
+                            //	设置控制存储到缓存
+                            AlbumInfo albumInfo1 = new AlbumInfo();
+                            redisTemplate.opsForValue().set(albumKey, albumInfo1,
+                                    RedisConstant.ALBUM_TEMPORARY_TIMEOUT, TimeUnit.SECONDS);
+                            return albumInfo1;
+                        }
+                        //	将数据写入缓存
+                        redisTemplate.opsForValue().set(albumKey, albumInfo, RedisConstant.ALBUM_TIMEOUT, TimeUnit.SECONDS);
+                        return albumInfo;
+                    } finally {
+                        // 解锁
+                        lock.unlock();
+                    }
+                } else {
+                    //	没有获取到锁的线程，自旋
+                    return getAlbumInfoRedisson(albumId);
                 }
             } else {
                 //	缓存不为空，直接返回数据
@@ -389,5 +454,135 @@ public class AlbumInfoServiceImpl extends ServiceImpl<AlbumInfoMapper, AlbumInfo
     @Override
     public void updateStat(Long albumId, String albumStatPlay, Integer count) {
         albumInfoMapper.updateStat(albumId, albumStatPlay, count);
+    }
+    
+    /**
+     * 获取
+     *
+     * @return albumInfoMapper
+     */
+    public AlbumInfoMapper getAlbumInfoMapper() {
+        return albumInfoMapper;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param albumInfoMapper
+     */
+    public void setAlbumInfoMapper(AlbumInfoMapper albumInfoMapper) {
+        this.albumInfoMapper = albumInfoMapper;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return albumAttributeValueMapper
+     */
+    public AlbumAttributeValueMapper getAlbumAttributeValueMapper() {
+        return albumAttributeValueMapper;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param albumAttributeValueMapper
+     */
+    public void setAlbumAttributeValueMapper(AlbumAttributeValueMapper albumAttributeValueMapper) {
+        this.albumAttributeValueMapper = albumAttributeValueMapper;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return albumStatMapper
+     */
+    public AlbumStatMapper getAlbumStatMapper() {
+        return albumStatMapper;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param albumStatMapper
+     */
+    public void setAlbumStatMapper(AlbumStatMapper albumStatMapper) {
+        this.albumStatMapper = albumStatMapper;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return trackInfoMapper
+     */
+    public TrackInfoMapper getTrackInfoMapper() {
+        return trackInfoMapper;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param trackInfoMapper
+     */
+    public void setTrackInfoMapper(TrackInfoMapper trackInfoMapper) {
+        this.trackInfoMapper = trackInfoMapper;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return rabbitService
+     */
+    public RabbitService getRabbitService() {
+        return rabbitService;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param rabbitService
+     */
+    public void setRabbitService(RabbitService rabbitService) {
+        this.rabbitService = rabbitService;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return redisTemplate
+     */
+    public RedisTemplate getRedisTemplate() {
+        return redisTemplate;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param redisTemplate
+     */
+    public void setRedisTemplate(RedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+    
+    /**
+     * 获取
+     *
+     * @return albumAttributeValueService
+     */
+    public AlbumAttributeValueService getAlbumAttributeValueService() {
+        return albumAttributeValueService;
+    }
+    
+    /**
+     * 设置
+     *
+     * @param albumAttributeValueService
+     */
+    public void setAlbumAttributeValueService(AlbumAttributeValueService albumAttributeValueService) {
+        this.albumAttributeValueService = albumAttributeValueService;
+    }
+    
+    public String toString() {
+        return "AlbumInfoServiceImpl{albumInfoMapper = " + albumInfoMapper + ", albumAttributeValueMapper = " + albumAttributeValueMapper + ", albumStatMapper = " + albumStatMapper + ", trackInfoMapper = " + trackInfoMapper + ", rabbitService = " + rabbitService + ", redisTemplate = " + redisTemplate + ", albumAttributeValueService = " + albumAttributeValueService + ", log = " + log + "}";
     }
 }
