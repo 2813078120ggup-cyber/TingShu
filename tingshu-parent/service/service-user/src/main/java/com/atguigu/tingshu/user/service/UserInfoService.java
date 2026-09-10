@@ -10,4 +10,7 @@ public interface UserInfoService extends IService<UserInfo> {
     
     // 根据用户id查询用户是否购买过声音列表
     Map<Long, Integer> userIsPaidTrack(Long userId, Long albumId, List<Long> trackIdList);
+    
+    // 判断用户是否购买过专辑
+    Boolean isPaidAlbum(Long userId, Long albumId);
 }

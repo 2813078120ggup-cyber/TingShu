@@ -67,5 +67,22 @@ public class UserInfoApiController {
         //	返回map 集合数据
         return Result.ok(map);
     }
+    
+    /**
+     * 判断用户是否购买过专辑
+     *
+     * @param albumId
+     * @return
+     */
+    @TingShuLogin
+    @Operation(summary = "判断用户是否购买过专辑")
+    @GetMapping("isPaidAlbum/{albumId}")
+    public Result<Boolean> isPaidAlbum(@PathVariable Long albumId) {
+        // 获取到用户Id
+        Long userId = AuthContextHolder.getUserId();
+        // 调用服务层方法
+        Boolean flag = userInfoService.isPaidAlbum(userId, albumId);
+        return Result.ok(flag);
+    }
 }
 
