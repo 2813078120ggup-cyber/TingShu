@@ -22,6 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "声音管理")
@@ -36,6 +37,20 @@ public class TrackInfoApiController {
     private VodService vodService;
     @Autowired
     private RedisTemplate redisTemplate;
+    
+    
+    // 获取可以购买声音集数
+    //Request URL: http://localhost/api/album/trackInfo/findUserTrackPaidList/2879
+    //Request Method: GET
+    @TingShuLogin
+    @Operation(summary = "获取用户声音分集购买支付列表")
+    @GetMapping("/findUserTrackPaidList/{trackId}")
+    public Result<List<Map<String, Object>>> findUserTrackPaidList(@PathVariable Long trackId) {
+        // 获取购买记录集合
+        List<Map<String, Object>> map = trackInfoService.findUserTrackPaidList(trackId);
+        return Result.ok(map);
+    }
+    
     
     // 查询声音列表
     //Request URL: http://localhost/api/album/trackInfo/findUserTrackPage/1/10
@@ -193,5 +208,23 @@ public class TrackInfoApiController {
         //	返回数据
         return Result.ok(pageModel);
     }
+   
+    
+    /**
+     * 批量获取下单付费声音列表
+     *
+     * @param trackId
+     * @param trackCount
+     * @return
+     */
+    @Operation(summary = "批量获取下单付费声音列表")
+    @GetMapping("findPaidTrackInfoList/{trackId}/{trackCount}")
+    public Result<List<TrackInfo>> findPaidTrackInfoList(@PathVariable Long trackId, @PathVariable Integer trackCount) {
+        //	调用服务层方法
+        List<TrackInfo> trackInfoList = trackInfoService.findPaidTrackInfoList(trackId, trackCount);
+        //	返回数据列表
+        return Result.ok(trackInfoList);
+    }
+    
 }
 

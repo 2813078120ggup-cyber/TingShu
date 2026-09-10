@@ -49,4 +49,13 @@ public interface UserInfoFeignClient {
      */
     @GetMapping("api/user/userInfo/isPaidAlbum/{albumId}")
     Result<Boolean> isPaidAlbum(@PathVariable("albumId") Long albumId);
+    
+    /**
+     * 获取专辑已支付的声音Id集合列表
+     *
+     * @param albumId
+     * @return
+     */
+    @GetMapping("api/user/userInfo/findUserPaidTrackList/{albumId}")
+    Result<List<Long>> findUserPaidTrackList(@PathVariable Long albumId);
 }

@@ -84,5 +84,24 @@ public class UserInfoApiController {
         Boolean flag = userInfoService.isPaidAlbum(userId, albumId);
         return Result.ok(flag);
     }
+    
+    
+    /**
+     * 根据专辑Id 获取到用户已支付声音Id列表
+     *
+     * @param albumId
+     * @return
+     */
+    @TingShuLogin
+    @Operation(summary = "根据专辑id获取用户支付过的声音id列表")
+    @GetMapping("findUserPaidTrackList/{albumId}")
+    public Result findUserPaidTrackList(@PathVariable Long albumId) {
+        // 获取用户Id
+        Long userId = AuthContextHolder.getUserId();
+        // 根据用户Id 与 专辑Id 获取到已购买的声音Id 集合列表
+        List<Long> trackIdList = this.userInfoService.findUserPaidTrackList(userId, albumId);
+        // 返回声音Id 集合数据
+        return Result.ok(trackIdList);
+    }
 }
 

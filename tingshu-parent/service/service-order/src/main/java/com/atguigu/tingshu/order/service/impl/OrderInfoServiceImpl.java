@@ -2,11 +2,13 @@ package com.atguigu.tingshu.order.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.tingshu.album.client.AlbumInfoFeignClient;
+import com.atguigu.tingshu.album.client.TrackInfoFeignClient;
 import com.atguigu.tingshu.common.constant.SystemConstant;
 import com.atguigu.tingshu.common.execption.GuiguException;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.result.ResultCodeEnum;
 import com.atguigu.tingshu.model.album.AlbumInfo;
+import com.atguigu.tingshu.model.album.TrackInfo;
 import com.atguigu.tingshu.model.order.OrderInfo;
 import com.atguigu.tingshu.model.user.VipServiceConfig;
 import com.atguigu.tingshu.order.helper.SignHelper;
@@ -29,6 +31,7 @@ import org.springframework.util.Assert;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,6 +48,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     private VipServiceConfigFeignClient vipServiceConfigFeignClient;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private TrackInfoFeignClient trackInfoFeignClient;
     
     
     // 确认订单
@@ -95,7 +100,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                     // 打折 100 8  100*0.8
                     // 优惠金额 = 原价 × (10 - 折扣) ÷ 10
                     derateAmount = originalAmount.multiply(new BigDecimal("10")
-                            .subtract(albumInfo.getDiscount()))
+                                    .subtract(albumInfo.getDiscount()))
                             .divide(new BigDecimal(10), 2, RoundingMode.HALF_UP);
                 }
                 //  订单总价
@@ -157,8 +162,44 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 orderDerateVoList.add(orderDerateVo);
             }
         }
-        // 5. todo: 判断为 1002 声音
-        
+        // 5.  判断为 1002 声音
+        else if (tradeVo.getItemType().equals(SystemConstant.ORDER_ITEM_TYPE_TRACK)) {
+            //  判断tradeVo.getTrackCount():购买集数（本集/后n集）
+            if (tradeVo.getTrackCount().intValue() < 0) {
+                throw new GuiguException(ResultCodeEnum.ARGUMENT_VALID_ERROR);
+            }
+            //  获取下单声音列表
+            Result<List<TrackInfo>> trackInfoListResult =
+                    trackInfoFeignClient.findPaidTrackInfoList(tradeVo.getItemId(), tradeVo.getTrackCount());
+            System.out.println("trackInfoListResult = " + trackInfoListResult);
+            
+            Assert.notNull(trackInfoListResult,
+                    "查询待支付声音Feign结果不能为空");
+            List<TrackInfo> trackInfoList = trackInfoListResult.getData();
+            System.out.println("trackInfoList = " + trackInfoList);
+            Assert.notEmpty(trackInfoList,
+                    "没有查询到需要购买的声音");
+            //  设定：购买声音不支持折扣
+            // 获取下单列表中第一个声音id，再根据声音id获取专辑id，再根据专辑id获取专辑信息
+            Result<AlbumInfo> albumInfoResult = albumInfoFeignClient.getAlbumInfo(trackInfoList.get(0).getAlbumId());
+            AlbumInfo albumInfo = albumInfoResult.getData();
+            // >0 :后n集    =0:本集
+            originalAmount = tradeVo.getTrackCount().intValue() > 0
+                    ? albumInfo.getPrice().multiply(new BigDecimal(tradeVo.getTrackCount()))
+                    : albumInfo.getPrice();
+            //  计算订单总价
+            orderAmount = originalAmount;
+            
+            //  循环遍历声音集合对象赋值订单明细
+            orderDetailVoList = trackInfoList.stream().map(trackInfo -> {
+                OrderDetailVo orderDetailVo = new OrderDetailVo();
+                orderDetailVo.setItemId(trackInfo.getId());
+                orderDetailVo.setItemUrl(trackInfo.getCoverUrl());
+                orderDetailVo.setItemPrice(albumInfo.getPrice());
+                orderDetailVo.setItemName(trackInfo.getTrackTitle());
+                return orderDetailVo;
+            }).collect(Collectors.toList());
+        }
         
         
         // 7. 防止重复提交（防重）：生成一个唯一标识，保存到redis中一份
@@ -190,6 +231,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         //  返回对象
         return orderInfoVo;
         
-
+        
     }
 }

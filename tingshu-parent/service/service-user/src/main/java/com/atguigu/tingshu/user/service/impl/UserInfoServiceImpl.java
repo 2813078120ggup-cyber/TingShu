@@ -1,10 +1,13 @@
 package com.atguigu.tingshu.user.service.impl;
 
+import com.atguigu.tingshu.common.result.Result;
+import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.model.user.UserPaidAlbum;
 import com.atguigu.tingshu.model.user.UserPaidTrack;
 import com.atguigu.tingshu.user.mapper.UserInfoMapper;
 import com.atguigu.tingshu.user.mapper.UserPaidAlbumMapper;
+import com.atguigu.tingshu.user.mapper.UserPaidTrackMapper;
 import com.atguigu.tingshu.user.service.UserInfoService;
 import com.atguigu.tingshu.user.service.UserPaidTrackService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -31,6 +34,9 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     
     @Autowired
     private UserPaidTrackService userPaidTrackService;
+    
+    @Autowired
+    private UserPaidTrackMapper userPaidTrackMapper;
     
     // 根据用户id查询用户是否购买过声音列表
     /*    传入：
@@ -100,5 +106,20 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
         lambdaQueryWrapper.eq(UserPaidAlbum::getUserId, userId).eq(UserPaidAlbum::getAlbumId, albumId);
         Long count = userPaidAlbumMapper.selectCount(lambdaQueryWrapper);
         return count > 0;
+    }
+    
+    // 根据专辑id+用户id获取购买的声音id列表
+    
+    @Override
+    public List<Long> findUserPaidTrackList(Long userId, Long albumId) {
+        // 根据用户Id 与 专辑Id 获取到已购买的声音集合
+        LambdaQueryWrapper<UserPaidTrack> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(UserPaidTrack::getUserId, userId)
+                .eq(UserPaidTrack::getAlbumId, albumId);
+        List<UserPaidTrack> userPaidTrackList = userPaidTrackMapper.selectList(lambdaQueryWrapper);
+        // 获取到已购买的声音集合Id 列表
+        List<Long> trackIdList = userPaidTrackList.stream().map(UserPaidTrack::getTrackId).collect(Collectors.toList());
+        // 返回集合数据
+        return trackIdList;
     }
 }
