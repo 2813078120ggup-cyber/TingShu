@@ -16,6 +16,6 @@ public class VipServiceConfigDegradeFeignClient implements VipServiceConfigFeign
     
     @Override
     public Result<VipServiceConfig> getVipServiceConfig(Long id) {
-        return null;
+        return Result.fail();
     }
 }

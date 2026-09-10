@@ -1,6 +1,6 @@
 package com.atguigu.tingshu.order.api;
 
-import com.atguigu.tingshu.common.cache.TingShuCache;
+import com.atguigu.tingshu.common.login.TingShuLogin;
 import com.atguigu.tingshu.common.result.Result;
 import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.order.service.OrderInfoService;
@@ -24,7 +24,7 @@ public class OrderInfoApiController {
     @Autowired
     private OrderInfoService orderInfoService;
     
-    @TingShuCache
+    @TingShuLogin
     @Operation(summary = "确认订单")
     @PostMapping("trade")
     public Result<OrderInfoVo> trade(@RequestBody @Validated TradeVo tradeVo) {

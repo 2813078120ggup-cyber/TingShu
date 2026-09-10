@@ -20,6 +20,7 @@ import org.springframework.util.Assert;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
@@ -53,7 +54,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Map<String, Object> getItem(Long albumId) {
         // 创建map集合对象
-        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> result = new ConcurrentHashMap<>();
         
         // 1. 根据专辑id获取专辑信息
         // 通过albumId 查询albumInfo
@@ -71,15 +72,17 @@ public class ItemServiceImpl implements ItemService {
         // 2. 根据专辑id获取四个统计数据
         CompletableFuture<Void> albumStatCompletableFuture = CompletableFuture.runAsync(() -> {
             Result<AlbumStatVo> albumStatVoResult = albumInfoFeignClient.getAlbumStatVo(albumId);
+            Assert.notNull(albumStatVoResult, "获取专辑统计结果集为空");
             AlbumStatVo albumStatVo = albumStatVoResult.getData();
             Assert.notNull(albumStatVo, "专辑统计信息为空");
             result.put("albumStatVo", albumStatVo);
             log.info("albumStatVo:{}", JSON.toJSONString(albumStatVo));
         }, threadPoolExecutor);
         
-         // 3. 根据专辑里面三级id获取一级和二级分类数据
+        // 3. 根据专辑里面三级id获取一级和二级分类数据
         CompletableFuture<Void> baseCategoryViewCompletableFuture = albumCompletableFuture.thenAcceptAsync(albumInfo -> {
             Result<BaseCategoryView> baseCategoryViewResult = categoryFeignClient.getCategoryView(albumInfo.getCategory3Id());
+            Assert.notNull(baseCategoryViewResult, "获取分类结果集为空");
             BaseCategoryView baseCategoryView = baseCategoryViewResult.getData();
             result.put("baseCategoryView", baseCategoryView);
             Assert.notNull(baseCategoryView, "分类信息为空");
@@ -89,6 +92,7 @@ public class ItemServiceImpl implements ItemService {
         // 4. 根据用户id获取用户信息
         CompletableFuture<Void> announcerCompletableFuture = albumCompletableFuture.thenAcceptAsync(albumInfo -> {
             Result<UserInfoVo> userInfoVoResult = userInfoFeignClient.getUserInfoVo(albumInfo.getUserId());
+            Assert.notNull(userInfoVoResult, "获取主播用户结果集为空");
             UserInfoVo userInfoVo = userInfoVoResult.getData();
             result.put("announcer", userInfoVo);
             Assert.notNull(userInfoVo, "用户信息为空");
@@ -96,7 +100,18 @@ public class ItemServiceImpl implements ItemService {
         }, threadPoolExecutor);
         
         // 5. 多个任务都执行完汇总
-        CompletableFuture.allOf(albumCompletableFuture, albumStatCompletableFuture, baseCategoryViewCompletableFuture, announcerCompletableFuture).join();
+        //CompletableFuture.allOf(albumCompletableFuture, albumStatCompletableFuture, baseCategoryViewCompletableFuture, announcerCompletableFuture).join();
+        try {
+            CompletableFuture.allOf(
+                    albumCompletableFuture,
+                    albumStatCompletableFuture,
+                    baseCategoryViewCompletableFuture,
+                    announcerCompletableFuture
+            ).join();
+        } catch (Exception e) {
+            log.error("获取专辑详情失败，albumId={}", albumId, e);
+            throw e;
+        }
         // 返回map集合
         return result;
     }

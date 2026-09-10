@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,5 +32,11 @@ public class VipServiceConfigApiController {
         List<VipServiceConfig> list = this.vipServiceConfigService.list();
         return Result.ok(list);
     }
-}
 
+    @Operation(summary = "根据id获取VIP服务配置信息")
+    @GetMapping("getVipServiceConfig/{id}")
+    public Result<VipServiceConfig> getVipServiceConfig(@PathVariable("id") Long id) {
+        VipServiceConfig vipServiceConfig = this.vipServiceConfigService.getById(id);
+        return vipServiceConfig == null ? Result.fail() : Result.ok(vipServiceConfig);
+    }
+}

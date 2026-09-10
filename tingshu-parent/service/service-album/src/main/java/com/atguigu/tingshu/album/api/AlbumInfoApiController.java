@@ -106,55 +106,65 @@ public class AlbumInfoApiController {
         AlbumInfo albumInfo = albumInfoService.getAlbumInfo(albumId);
         return Result.ok(albumInfo);
     }
-        
-        // 修改专辑信息
-        //Request URL: http://localhost/api/album/albumInfo/updateAlbumInfo/1594
-        //Request Method: PUT
-        @PutMapping("updateAlbumInfo/{albumId}")
-        public Result updateAlbumInfo (@PathVariable Long albumId, @RequestBody @Validated AlbumInfoVo albumInfoVo){
-            albumInfoService.updateAlbumInfo(albumId, albumInfoVo);
-            return Result.ok();
-        }
-        
-        
-        // 远程调用：根据专辑id获得4统计数据
-        @GetMapping("getAlbumInfoStat/{albumId}")
-        public Result<Map<String, Object>> getAlbumInfoStat (@PathVariable Long albumId){
-            Map<String, Object> map = albumInfoService.getAlbumInfoStat(albumId);
-            return Result.ok(map);
-        }
-        
-        //根据专辑Id 获取到专辑属性列表
-        
-        /**
-         * 根据专辑Id 获取到专辑属性列表
-         *
-         * @param albumId
-         * @return
-         */
-        @Operation(summary = "获取专辑属性值列表")
-        @GetMapping("findAlbumAttributeValue/{albumId}")
-        public Result<List<AlbumAttributeValue>> findAlbumAttributeValue (@PathVariable Long albumId){
-            //	获取到专辑属性集合
-            List<AlbumAttributeValue> albumAttributeValueList = albumInfoService.findAlbumAttributeValueByAlbumId(albumId);
-            return Result.ok(albumAttributeValueList);
-        }
-        
-        
-        /**
-         * 根据专辑Id 获取到统计信息
-         *
-         * @param albumId
-         * @return
-         */
-        @Operation(summary = "获取到专辑统计信息")
-        @GetMapping("/getAlbumStatVo/{albumId}")
-        public Result getAlbumStatVo (@PathVariable Long albumId){
-            //	获取服务层方法
-            AlbumStatVo albumStatVo = this.albumInfoService.getAlbumStatVoByAlbumId(albumId);
-            return Result.ok(albumStatVo);
-        }
-        
-        
+    
+    // 修改专辑信息
+    //Request URL: http://localhost/api/album/albumInfo/updateAlbumInfo/1594
+    //Request Method: PUT
+    @PutMapping("updateAlbumInfo/{albumId}")
+    public Result updateAlbumInfo(@PathVariable Long albumId, @RequestBody @Validated AlbumInfoVo albumInfoVo) {
+        albumInfoService.updateAlbumInfo(albumId, albumInfoVo);
+        return Result.ok();
     }
+    
+    
+    // 远程调用：根据专辑id获得4统计数据
+    @GetMapping("getAlbumInfoStat/{albumId}")
+    public Result<Map<String, Object>> getAlbumInfoStat(@PathVariable Long albumId) {
+        Map<String, Object> map = albumInfoService.getAlbumInfoStat(albumId);
+        return Result.ok(map);
+    }
+    
+    //根据专辑Id 获取到专辑属性列表
+    
+    /**
+     * 根据专辑Id 获取到专辑属性列表
+     *
+     * @param albumId
+     * @return
+     */
+    @Operation(summary = "获取专辑属性值列表")
+    @GetMapping("findAlbumAttributeValue/{albumId}")
+    public Result<List<AlbumAttributeValue>> findAlbumAttributeValue(@PathVariable Long albumId) {
+        //	获取到专辑属性集合
+        List<AlbumAttributeValue> albumAttributeValueList = albumInfoService.findAlbumAttributeValueByAlbumId(albumId);
+        return Result.ok(albumAttributeValueList);
+    }
+    
+    
+    /**
+     * 根据专辑Id 获取到统计信息
+     *
+     * @param albumId
+     * @return
+     */
+    @Operation(summary = "获取到专辑统计信息")
+    @GetMapping("/getAlbumStatVo/{albumId}")
+    public Result getAlbumStatVo(@PathVariable Long albumId) {
+        //	获取服务层方法
+        //AlbumStatVo albumStatVo = this.albumInfoService.getAlbumStatVoByAlbumId(albumId);
+        //return Result.ok(albumStatVo);
+        
+        
+        System.out.println("service-album 收到 albumId = " + albumId);
+        
+        AlbumStatVo albumStatVo =
+                this.albumInfoService.getAlbumStatVoByAlbumId(albumId);
+        
+        System.out.println("查询到的 albumStatVo = " + albumStatVo);
+        
+        return Result.ok(albumStatVo);
+    }
+    
+    
+}
 
