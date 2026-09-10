@@ -9,4 +9,9 @@ public interface OrderInfoService extends IService<OrderInfo> {
     
     // 确认订单
     OrderInfoVo trade(TradeVo tradeVo, Long userId);
+    
+    // 提交订单
+    String submitOrder(OrderInfoVo orderInfoVo, Long userId);
+    
+    
 }
