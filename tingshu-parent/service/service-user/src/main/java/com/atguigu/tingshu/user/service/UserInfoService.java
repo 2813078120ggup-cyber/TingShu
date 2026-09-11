@@ -20,4 +20,7 @@ public interface UserInfoService extends IService<UserInfo> {
     
     // 添加购买记录
     void savePaidRecord(UserPaidRecordVo userPaidRecordVo);
+    
+    // 策略模式优化添加购买记录
+    void userPayRecord(UserPaidRecordVo userPaidRecordVo);
 }

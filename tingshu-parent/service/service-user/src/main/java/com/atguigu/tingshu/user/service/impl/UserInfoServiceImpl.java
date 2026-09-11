@@ -9,6 +9,8 @@ import com.atguigu.tingshu.model.user.*;
 import com.atguigu.tingshu.user.mapper.*;
 import com.atguigu.tingshu.user.service.UserInfoService;
 import com.atguigu.tingshu.user.service.UserPaidTrackService;
+import com.atguigu.tingshu.user.strategy.ItemTypeStrategy;
+import com.atguigu.tingshu.user.strategy.StrategyFactory;
 import com.atguigu.tingshu.vo.user.UserPaidRecordVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -135,6 +138,7 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     }
     
     //添加购买记录
+    // 没有策略模式方法
     
     @Override
     public void savePaidRecord(UserPaidRecordVo userPaidRecordVo) {
@@ -226,4 +230,21 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
             this.userInfoMapper.updateById(userInfo);
         }
     }
+    
+    
+    @Autowired
+    private StrategyFactory strategyFactory;
+    
+    // 使用策略模式优化添加购买记录
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void userPayRecord(UserPaidRecordVo userPaidRecordVo) {
+        String itemType = userPaidRecordVo.getItemType();
+        //从策略工厂中获取对应的策略对象
+        ItemTypeStrategy strategy = strategyFactory.getStrategy(itemType);
+        //执行策略对象的任务
+        strategy.savePaidRecord(userPaidRecordVo);
+    }
+    
+    
 }

@@ -30,7 +30,8 @@ public class UserInfoApiController {
     @PostMapping("/savePaidRecord")
     public Result savePaidRecord(@RequestBody UserPaidRecordVo userPaidRecordVo) {
         // 调用服务层方法.
-        userInfoService.savePaidRecord(userPaidRecordVo);
+        //userInfoService.savePaidRecord(userPaidRecordVo);
+        userInfoService.userPayRecord(userPaidRecordVo);
         // 默认返回
         return Result.ok();
     }
