@@ -5,7 +5,38 @@
 
 
 <mapper namespace="com.atguigu.tingshu.order.mapper.OrderInfoMapper">
+    <resultMap id="orderInfoMap" type="com.atguigu.tingshu.model.order.OrderInfo" autoMapping="true">
+        <id property="id" column="id"></id>
+        <collection property="orderDetailList" ofType="com.atguigu.tingshu.model.order.OrderDetail" autoMapping="true">
+            <id property="id" column="detail_id"></id>
+        </collection>
+    </resultMap>
+    <!-- 用于select查询公用抽取的列 -->
+    <sql id="columns">
+        oi.id,
+            oi.user_id,
+            oi.order_title,
+            oi.order_no,
+            oi.order_status,
+            oi.original_amount,
+            oi.derate_amount,
+            oi.order_amount,
+            oi.item_type,
+            oi.pay_way,
+            od.id detail_id,
+            od.item_id,
+            od.item_name,
+            od.item_url,
+            od.item_price
+    </sql>
 
+    <select id="selectUserPage" resultMap="orderInfoMap">
+        select
+        <include refid="columns"></include>
+        from order_info oi inner join order_detail od on oi.id = od.order_id
+        where oi.user_id = #{userId}
+        order by oi.id desc
+    </select>
 
 
 </mapper>

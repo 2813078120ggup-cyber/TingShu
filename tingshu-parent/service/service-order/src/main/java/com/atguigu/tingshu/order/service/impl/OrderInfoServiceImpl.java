@@ -31,6 +31,8 @@ import com.atguigu.tingshu.vo.order.TradeVo;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
 import com.atguigu.tingshu.vo.user.UserPaidRecordVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -399,7 +401,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
     
     // 根据订单编号查询订单数据
-    private OrderInfo getOrderInfoByOrderNo(String orderNo) {
+    public OrderInfo getOrderInfoByOrderNo(String orderNo) {
         // 获取订单对象
         OrderInfo orderInfo = this.getOne(new LambdaQueryWrapper<OrderInfo>().eq(OrderInfo::getOrderNo, orderNo));
         //  根据订单编号查询订单明细
@@ -407,6 +409,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
                 new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getOrderId, orderInfo.getId()));
         // 将订单明细设置到订单对象
         orderInfo.setOrderDetailList(orderDetailList);
+        // 修改getOrderInfoByOrderNo方法
+        //  获取支付方式：
+        orderInfo.setPayWayName(this.getPayWayName(orderInfo.getPayWay()));
         // 返回数据
         return orderInfo;
     }
@@ -419,5 +424,57 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             orderInfo.setOrderStatus(SystemConstant.ORDER_STATUS_CANCEL);
             orderInfoMapper.updateById(orderInfo);
         }
+    }
+    
+    /**
+     * 根据payWay 返回支付名称
+     *
+     * @param payWay
+     * @return
+     */
+    private String getPayWayName(String payWay) {
+        //  声明一个对象
+        return SystemConstant.ORDER_PAY_WAY_WEIXIN.equals(payWay) ? "微信支付" : "余额支付";
+    }
+    
+    
+    // 查看我的订单
+    
+    /**
+     * @param pageParam
+     * @param userId
+     * @return
+     */
+    @Override
+    public IPage<OrderInfo> findUserPage(Page<OrderInfo> pageParam, Long userId) {
+        //  调用mapper 层方法
+        IPage<OrderInfo> infoIPage = orderInfoMapper.selectUserPage(pageParam, userId);
+        infoIPage.getRecords().forEach(item -> {
+            //  设置状态名
+            item.setOrderStatusName(getOrderStatusName(item.getOrderStatus()));
+            item.setPayWayName(getPayWayName(item.getPayWay()));
+        });
+        return infoIPage;
+    }
+    
+    /**
+     * 根据订单状态获取到订单名称
+     *
+     * @param orderStatus
+     * @return
+     */
+    private String getOrderStatusName(String orderStatus) {
+        //  声明订单状态名称
+        String orderStatusName = "";
+        //  判断
+        if (SystemConstant.ORDER_STATUS_UNPAID.equals(orderStatus)) {
+            orderStatusName = "未支付";
+        } else if (SystemConstant.ORDER_STATUS_PAID.equals(orderStatus)) {
+            orderStatusName = "已支付";
+        } else {
+            orderStatusName = "已取消";
+        }
+        //  返回
+        return orderStatusName;
     }
 }
