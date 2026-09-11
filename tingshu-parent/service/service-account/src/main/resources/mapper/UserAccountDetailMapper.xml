@@ -6,12 +6,32 @@
 
 <mapper namespace="com.atguigu.tingshu.account.mapper.UserAccountDetailMapper">
 
-	<resultMap id="RechargeInfoMap" type="com.atguigu.tingshu.model.account.UserAccountDetail" autoMapping="true">
-	</resultMap>
+    <resultMap id="RechargeInfoMap" type="com.atguigu.tingshu.model.account.UserAccountDetail" autoMapping="true">
+    </resultMap>
 
-	<sql id="columns">
-		id,user_id,title,trade_type,amount,order_no,create_time,update_time,is_deleted
-	</sql>
+    <sql id="columns">
+        id
+        ,user_id,title,trade_type,amount,order_no,create_time,update_time,is_deleted
+    </sql>
+    <!--
+       充值记录类型 固定1201
+    -->
+    <select id="selectUserRechargePage" resultMap="RechargeInfoMap">
+        select
+        <include refid="columns"/>
+        from user_account_detail
+        where user_id = #{userId} and trade_type = '1201'
+        and is_deleted = 0
+        order by id desc
+    </select>
 
+    <select id="selectUserConsumePage" resultMap="RechargeInfoMap">
+        select
+        <include refid="columns"/>
+        from user_account_detail
+        where user_id = #{userId} and trade_type = '1204'
+        and is_deleted = 0
+        order by id desc
+    </select>
 </mapper>
 

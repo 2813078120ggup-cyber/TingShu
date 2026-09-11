@@ -12,10 +12,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Tag(name = "微信支付接口")
@@ -51,6 +53,7 @@ public class WxPayApiController {
     
     @Autowired
     private PaymentInfoService paymentInfoService;
+    
     /**
      * 查询支付状态 https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_5_2.shtml
      *
@@ -73,5 +76,47 @@ public class WxPayApiController {
             e.printStackTrace();
         }
         return Result.ok(false);
+    }
+    
+    
+    //  https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_5_5.shtml
+    
+    /**
+     * 异步回调
+     *
+     * @param request
+     * @return
+     */
+    @Operation(summary = "微信支付异步通知接口")
+    @PostMapping("/notify")
+    public Map<String, Object> notify(HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            //  调用方法
+            wxPayService.wxnotify(request);
+            //返回成功
+            result.put("code", "SUCCESS");
+            result.put("message", "成功");
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        //返回失败
+        result.put("code", "FAIL");
+        result.put("message", "失败");
+        return result;
+    }
+    
+    @TingShuLogin
+    @Operation(summary = "微信Native下单")
+    @Parameters({
+            @Parameter(name = "paymentType", description = "支付类型：1301-订单 1302-充值", in = ParameterIn.PATH, required = true),
+            @Parameter(name = "orderNo", description = "订单号", required = true, in = ParameterIn.PATH),
+    })
+    @PostMapping("/createNative/{paymentType}/{orderNo}")
+    public Result<Map<String, Object>> createNative(@PathVariable String paymentType, @PathVariable String orderNo) {
+        Map<String, Object> map = wxPayService.createNative(paymentType, orderNo, AuthContextHolder.getUserId());
+        return Result.ok(map);
     }
 }

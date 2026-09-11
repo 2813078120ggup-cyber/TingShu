@@ -59,6 +59,7 @@ public class PaymentInfoServiceImpl extends ServiceImpl<PaymentInfoMapper, Payme
             } else {
                 // 1302-充值
                 //  充值信息
+                // 远程调用：充值
                 Result<RechargeInfo> rechargeInfoResult = rechargeInfoFeignClient.getRechargeInfo(orderNo);
                 Assert.notNull(rechargeInfoResult, "返回充值对象不能不为空");
                 RechargeInfo rechargeInfo = rechargeInfoResult.getData();

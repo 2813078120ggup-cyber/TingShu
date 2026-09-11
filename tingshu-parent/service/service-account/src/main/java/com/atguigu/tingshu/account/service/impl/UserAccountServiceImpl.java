@@ -9,6 +9,8 @@ import com.atguigu.tingshu.model.account.UserAccount;
 import com.atguigu.tingshu.model.account.UserAccountDetail;
 import com.atguigu.tingshu.vo.account.AccountLockVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,5 +98,37 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         userAccountDetail.setAmount(amount);
         userAccountDetail.setOrderNo(orderNo);
         userAccountDetailMapper.insert(userAccountDetail);
+    }
+    
+    /**
+     * @param userId
+     * @param rechargeAmount
+     * @param orderNo
+     * @param accountTradeTypeDeposit
+     * @param 充值
+     */
+    @Override
+    public void add(Long userId, BigDecimal amount, String orderNo, String tradeType, String title) {
+        // 查看是否有当前对象
+        long count = userAccountDetailMapper.selectCount(new LambdaQueryWrapper<UserAccountDetail>().eq(UserAccountDetail::getOrderNo, orderNo));
+        if (count > 0) return;
+        //添加账号金额
+        userAccountMapper.add(userId, amount);
+        //添加账户明细
+        //this.log(userId, title, tradeType, amount, orderNo);
+    }
+    
+    
+    @Override
+    public IPage<UserAccountDetail> findUserRechargePage(Page<UserAccountDetail> pageParam, Long userId) {
+        // 调用mapper 方法
+        return userAccountDetailMapper.selectUserRechargePage(pageParam, userId);
+    }
+    
+    
+    @Override
+    public IPage<UserAccountDetail> findUserConsumePage(Page<UserAccountDetail> pageParam, Long userId) {
+        // 调用mapper 层方法
+        return userAccountDetailMapper.selectUserConsumePage(pageParam, userId);
     }
 }

@@ -10,13 +10,18 @@ import com.atguigu.tingshu.order.client.OrderInfoFeignClient;
 import com.atguigu.tingshu.payment.config.WxPayV3Config;
 import com.atguigu.tingshu.payment.service.PaymentInfoService;
 import com.atguigu.tingshu.payment.service.WxPayService;
+import com.atguigu.tingshu.payment.util.PayUtil;
 import com.atguigu.tingshu.user.client.UserInfoFeignClient;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
 import com.wechat.pay.java.core.RSAAutoCertificateConfig;
 import com.wechat.pay.java.core.exception.ServiceException;
+import com.wechat.pay.java.core.notification.NotificationParser;
+import com.wechat.pay.java.core.notification.RequestParam;
 import com.wechat.pay.java.service.payments.jsapi.JsapiServiceExtension;
 import com.wechat.pay.java.service.payments.jsapi.model.*;
 import com.wechat.pay.java.service.payments.model.Transaction;
+import com.wechat.pay.java.service.payments.nativepay.NativePayService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -140,5 +145,82 @@ public class WxPayServiceImpl implements WxPayService {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    @Override
+    public void wxnotify(HttpServletRequest request) {
+        //1.回调通知的验签与解密
+        //从request头信息获取参数
+        //HTTP 头 Wechatpay-Signature
+        // HTTP 头 Wechatpay-Nonce
+        //HTTP 头 Wechatpay-Timestamp
+        //HTTP 头 Wechatpay-Serial
+        //HTTP 头 Wechatpay-Signature-Type
+        //HTTP 请求体 body。切记使用原始报文，不要用 JSON 对象序列化后的字符串，避免验签的 body 和原文不一致。
+        String wechatPaySerial = request.getHeader("Wechatpay-Serial");
+        String nonce = request.getHeader("Wechatpay-Nonce");
+        String timestamp = request.getHeader("Wechatpay-Timestamp");
+        String signature = request.getHeader("Wechatpay-Signature");
+        // 调用工具类来获取请求体数据
+        String requestBody = PayUtil.readData(request);
+        
+        //2.构造 RequestParam
+        RequestParam requestParam = new RequestParam.Builder()
+                .serialNumber(wechatPaySerial)
+                .nonce(nonce)
+                .signature(signature)
+                .timestamp(timestamp)
+                .body(requestBody)
+                .build();
+        
+        //3.初始化 NotificationParser
+        NotificationParser parser = new NotificationParser(rsaAutoCertificateConfig);
+        //4.以支付通知回调为例，验签、解密并转换成 Transaction
+        Transaction transaction = parser.parse(requestParam, Transaction.class);
+        log.info("成功解析：{}", JSON.toJSONString(transaction));
+        if (null != transaction && transaction.getTradeState() == Transaction.TradeStateEnum.SUCCESS) {
+            // 5.处理支付业务
+            paymentInfoService.updatePaymentStatus(transaction);
+        }
+    }
+    
+    
+    @Override
+    public Map<String, Object> createNative(String paymentType, String orderNo, Long userId) {
+        try {
+            //保存支付记录
+            PaymentInfo paymentInfo = paymentInfoService.savePaymentInfo(paymentType, orderNo);
+            
+            // 构建service
+            NativePayService service = new NativePayService.Builder().config(rsaAutoCertificateConfig).build();
+            // request.setXxx(val)设置所需参数，具体参数可见Request定义
+            com.wechat.pay.java.service.payments.nativepay.model.PrepayRequest request = new com.wechat.pay.java.service.payments.nativepay.model.PrepayRequest();
+            com.wechat.pay.java.service.payments.nativepay.model.Amount amount = new com.wechat.pay.java.service.payments.nativepay.model.Amount();
+            amount.setTotal(1);
+            request.setAmount(amount);
+            request.setAppid(wxPayV3Config.getAppid());
+            request.setMchid(wxPayV3Config.getMerchantId());
+            request.setDescription(paymentInfo.getContent());
+            request.setNotifyUrl(wxPayV3Config.getNotifyUrl());
+            request.setOutTradeNo(paymentInfo.getOrderNo());
+            
+            // 调用下单方法，得到应答
+            com.wechat.pay.java.service.payments.nativepay.model.PrepayResponse response = service.prepay(request);
+            // 使用微信扫描 code_url 对应的二维码，即可体验Native支付
+            System.out.println(response.getCodeUrl());
+            
+            Map result = new HashMap<>();
+            result.put("codeUrl", response.getCodeUrl());
+            return result;
+        } catch (ServiceException e) {
+            e.printStackTrace();
+            throw new GuiguException(201, e.getErrorMessage());
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            throw new GuiguException(201, "订单号不存在");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GuiguException(201, "微信下单异常");
+        }
     }
 }

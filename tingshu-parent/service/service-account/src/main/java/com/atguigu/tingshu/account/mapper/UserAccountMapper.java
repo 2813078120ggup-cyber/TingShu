@@ -11,4 +11,6 @@ import java.math.BigDecimal;
 public interface UserAccountMapper extends BaseMapper<UserAccount> {
     
     int checkAndDeduct(@Param("userId") Long userId, @Param("amount") BigDecimal amount);
+    
+    void add(Long userId, BigDecimal amount);
 }
