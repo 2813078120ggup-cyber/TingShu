@@ -6,6 +6,7 @@ import com.atguigu.tingshu.common.util.AuthContextHolder;
 import com.atguigu.tingshu.model.user.UserInfo;
 import com.atguigu.tingshu.user.service.UserInfoService;
 import com.atguigu.tingshu.vo.user.UserInfoVo;
+import com.atguigu.tingshu.vo.user.UserPaidRecordVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.BeanUtils;
@@ -23,6 +24,17 @@ public class UserInfoApiController {
     
     @Autowired
     private UserInfoService userInfoService;
+    
+    // 添加购买记录
+    @Operation(summary = "处理用户购买记录")
+    @PostMapping("/savePaidRecord")
+    public Result savePaidRecord(@RequestBody UserPaidRecordVo userPaidRecordVo) {
+        // 调用服务层方法.
+        userInfoService.savePaidRecord(userPaidRecordVo);
+        // 默认返回
+        return Result.ok();
+    }
+    
     
     /**
      * 根据用户Id获取用户信息

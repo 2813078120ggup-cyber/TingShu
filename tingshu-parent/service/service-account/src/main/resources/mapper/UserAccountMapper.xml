@@ -11,7 +11,7 @@
     <update id="checkAndDeduct">
         UPDATE user_account
         SET total_amount     = total_amount - #{amount},
-            available_amount = available_amount - #{amount},
+            available_amount = available_amount - #{amount}
         WHERE user_id = #{userId}
           AND available_amount >= #{amount}
           AND is_deleted = 0

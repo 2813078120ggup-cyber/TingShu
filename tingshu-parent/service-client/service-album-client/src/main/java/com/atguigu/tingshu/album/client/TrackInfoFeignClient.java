@@ -17,13 +17,23 @@ import java.util.List;
  */
 @FeignClient(value = "service-album", fallback = TrackInfoDegradeFeignClient.class)
 public interface TrackInfoFeignClient {
-
+    
     /**
      * 批量获取下单付费声音列表
+     *
      * @param trackId
      * @param trackCount
      * @return
      */
     @GetMapping("api/album/trackInfo/findPaidTrackInfoList/{trackId}/{trackCount}")
     Result<List<TrackInfo>> findPaidTrackInfoList(@PathVariable("trackId") Long trackId, @PathVariable("trackCount") Integer trackCount);
+    
+    /**
+     * 获取声音信息
+     *
+     * @param id
+     * @return
+     */
+    @GetMapping("api/album/trackInfo/getTrackInfo/{id}")
+    Result<TrackInfo> getTrackInfo(@PathVariable("id") Long id);
 }

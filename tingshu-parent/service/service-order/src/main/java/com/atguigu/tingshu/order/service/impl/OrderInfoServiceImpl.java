@@ -283,7 +283,7 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         String orderNo = UUID.randomUUID().toString().replace("-", "");
         //  支付类型  账户余额
         if (!SystemConstant.ORDER_PAY_ACCOUNT.equals(orderInfoVo.getPayWay())) {
-            //  在线支付
+            // 微信支付
             this.saveOrder(orderInfoVo, userId, orderNo);
         } else {// 余额支付
             try {
@@ -336,7 +336,6 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
     
     // 保存订单
-    // todo
     private OrderInfo saveOrder(OrderInfoVo orderInfoVo, Long userId, String orderNo) {
         // order_info:    订单基本信息
         // order_detail:  订单明细
@@ -379,38 +378,46 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             this.orderPaySuccess(orderNo);
         } else {
             // 发送延迟队列，如果定时未支付，取消订单
-            rabbitService.sendDealyMessage(
-                    MqConst.EXCHANGE_CANCEL_ORDER,
-                    MqConst.ROUTING_CANCEL_ORDER,
-                    orderInfo.getId(),
-                    MqConst.CANCEL_ORDER_DELAY_TIME
-            );
+            rabbitService.sendDealyMessage(orderInfo.getId());
         }
         // 返回订单信息
         return orderInfo;
         
     }
     
+    // 根据订单编号修改订单状态
     private void orderPaySuccess(String orderNo) {
+        // 1. 根据订单编号查询订单对象
         OrderInfo orderInfo = this.getOrderInfoByOrderNo(orderNo);
-        //  判断当前订单状态。
+        //  判断当前订单状态 未支付：修改   已支付：不修改
         if (orderInfo.getOrderStatus().equals(SystemConstant.ORDER_STATUS_UNPAID)) {
-            //  赋值：
+            // 2. 订单对象设置状态值
             orderInfo.setOrderStatus(SystemConstant.ORDER_STATUS_PAID);
-            //  修改订单状态.
+            // 3. 调用方法进行修改
             this.orderInfoMapper.updateById(orderInfo);
         }
     }
     
+    // 根据订单编号查询订单数据
     private OrderInfo getOrderInfoByOrderNo(String orderNo) {
-        //  获取订单对象
+        // 获取订单对象
         OrderInfo orderInfo = this.getOne(new LambdaQueryWrapper<OrderInfo>().eq(OrderInfo::getOrderNo, orderNo));
-        //  查看订单明细
-        List<OrderDetail> orderDetailList = orderDetailMapper.selectList(new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getOrderId, orderInfo.getId()));
-        
-        // 赋值订单明细
+        //  根据订单编号查询订单明细
+        List<OrderDetail> orderDetailList = orderDetailMapper.selectList(
+                new LambdaQueryWrapper<OrderDetail>().eq(OrderDetail::getOrderId, orderInfo.getId()));
+        // 将订单明细设置到订单对象
         orderInfo.setOrderDetailList(orderDetailList);
         // 返回数据
         return orderInfo;
+    }
+    
+    //取消订单
+    @Override
+    public void orderCancel(long orderId) {
+        OrderInfo orderInfo = orderInfoMapper.selectById(orderId);
+        if (orderInfo.getOrderStatus().equals("0901")) {//未支付进行取消操作
+            orderInfo.setOrderStatus(SystemConstant.ORDER_STATUS_CANCEL);
+            orderInfoMapper.updateById(orderInfo);
+        }
     }
 }

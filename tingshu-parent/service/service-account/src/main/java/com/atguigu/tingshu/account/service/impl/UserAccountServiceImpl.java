@@ -60,7 +60,7 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         // 泛型：要查询的实体类
         LambdaQueryWrapper<UserAccount> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserAccount::getUserId, accountLockVo.getUserId())
-                        .ge(UserAccount::getAvailableAmount, accountLockVo.getAmount());
+                .ge(UserAccount::getAvailableAmount, accountLockVo.getAmount());
         
         // 根据userId查账户原始金额，减去支付金额，把最终金额设置到userAccount对象中
         LambdaQueryWrapper<UserAccount> wrapper = new LambdaQueryWrapper<>();
@@ -68,7 +68,8 @@ public class UserAccountServiceImpl extends ServiceImpl<UserAccountMapper, UserA
         UserAccount userAccount = userAccountMapper.selectOne(wrapper);
         // 原始金额-支付金额
         userAccount.setAvailableAmount(userAccount.getAvailableAmount().subtract(accountLockVo.getAmount()));
-        
+        BigDecimal amount = accountLockVo.getAmount();
+        userAccount.setTotalAmount(userAccount.getTotalAmount().subtract(amount));
         int count = userAccountMapper.update(userAccount, queryWrapper);
         
         //  判断

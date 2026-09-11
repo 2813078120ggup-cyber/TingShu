@@ -13,5 +13,6 @@ public interface OrderInfoService extends IService<OrderInfo> {
     // 提交订单
     String submitOrder(OrderInfoVo orderInfoVo, Long userId);
     
-    
+    // 取消订单
+    void orderCancel(long l);
 }

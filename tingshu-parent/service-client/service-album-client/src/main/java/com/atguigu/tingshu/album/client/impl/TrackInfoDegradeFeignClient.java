@@ -14,4 +14,13 @@ public class TrackInfoDegradeFeignClient implements TrackInfoFeignClient {
     public Result<List<TrackInfo>> findPaidTrackInfoList(Long trackId, Integer trackCount) {
         return Result.fail();
     }
+    
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public Result<TrackInfo> getTrackInfo(Long id) {
+        return null;
+    }
 }

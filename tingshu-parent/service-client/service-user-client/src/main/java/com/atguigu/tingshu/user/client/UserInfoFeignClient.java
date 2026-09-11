@@ -60,6 +60,7 @@ public interface UserInfoFeignClient {
     @GetMapping("api/user/userInfo/findUserPaidTrackList/{albumId}")
     Result<List<Long>> findUserPaidTrackList(@PathVariable Long albumId);
     
-    //
-    Result savePaidRecord(UserPaidRecordVo userPaidRecordVo);
+    // 处理用户购买记录
+    @PostMapping("api/user/userInfo/savePaidRecord")
+    Result savePaidRecord(@RequestBody UserPaidRecordVo userPaidRecordVo);
 }
