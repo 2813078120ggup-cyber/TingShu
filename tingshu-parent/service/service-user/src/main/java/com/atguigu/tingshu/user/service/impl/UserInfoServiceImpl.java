@@ -247,4 +247,11 @@ public class UserInfoServiceImpl extends ServiceImpl<UserInfoMapper, UserInfo> i
     }
     
     
+    @Override
+    public void updateVipExpireStatus() {
+        //	获取到当前时间
+        userInfoMapper.updateIsVip();
+    }
+    
+    
 }

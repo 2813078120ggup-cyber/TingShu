@@ -116,5 +116,13 @@ public class UserInfoApiController {
         // 返回声音Id 集合数据
         return Result.ok(trackIdList);
     }
+    
+    // 定时更新vip状态
+    @Operation(summary = "更新Vip到期失效状态")
+    @GetMapping("updateVipExpireStatus")
+    public Result updateVipExpireStatus() {
+        userInfoService.updateVipExpireStatus();
+        return Result.ok();
+    }
 }
 

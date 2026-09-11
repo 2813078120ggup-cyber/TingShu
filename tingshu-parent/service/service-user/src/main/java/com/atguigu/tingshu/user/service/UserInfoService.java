@@ -23,4 +23,7 @@ public interface UserInfoService extends IService<UserInfo> {
     
     // 策略模式优化添加购买记录
     void userPayRecord(UserPaidRecordVo userPaidRecordVo);
+    
+    // 定时更新vip状态
+    void updateVipExpireStatus();
 }

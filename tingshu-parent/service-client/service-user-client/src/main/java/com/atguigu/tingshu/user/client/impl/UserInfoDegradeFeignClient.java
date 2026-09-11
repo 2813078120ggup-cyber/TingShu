@@ -37,4 +37,15 @@ public class UserInfoDegradeFeignClient implements UserInfoFeignClient {
     public Result savePaidRecord(UserPaidRecordVo userPaidRecordVo) {
         return null;
     }
+    
+    
+    /**
+     * 更新Vip到期失效状态
+     *
+     * @return
+     */
+    @Override
+    public Result updateVipExpireStatus() {
+        return null;
+    }
 }

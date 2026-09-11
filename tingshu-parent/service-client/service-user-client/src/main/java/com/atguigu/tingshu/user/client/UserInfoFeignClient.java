@@ -63,4 +63,12 @@ public interface UserInfoFeignClient {
     // 处理用户购买记录
     @PostMapping("api/user/userInfo/savePaidRecord")
     Result savePaidRecord(@RequestBody UserPaidRecordVo userPaidRecordVo);
+    
+    /**
+     * 更新Vip到期失效状态
+     *
+     * @return
+     */
+    @GetMapping("api/user/userInfo/updateVipExpireStatus")
+    Result updateVipExpireStatus();
 }
