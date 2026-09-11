@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">TingShu 微服务架构</title>
+  <desc id="desc">客户端经网关访问九个业务服务，服务通过 Feign 协作并连接数据与基础设施</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 10 5 0 10Z" fill="#8B9099"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#F7F4EE"/>
+  <rect x="1" y="1" width="1198" height="558" rx="23" fill="none" stroke="#DED8CE" stroke-width="2"/>
+
+  <g font-family="Segoe UI, Microsoft YaHei, sans-serif">
+    <text x="54" y="58" font-size="13" font-weight="700" fill="#EB6A2C" letter-spacing="2">REQUEST FLOW</text>
+    <text x="54" y="88" font-size="25" font-weight="700" fill="#23262D">从统一入口到领域服务，再落到数据与消息基础设施</text>
+
+    <g>
+      <rect x="54" y="132" width="160" height="70" rx="14" fill="#23262D"/>
+      <text x="134" y="160" text-anchor="middle" font-size="13" fill="#AEB3BC">CLIENT</text>
+      <text x="134" y="184" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">小程序 / 管理端</text>
+
+      <path d="M214 167H272" fill="none" stroke="#8B9099" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <rect x="278" y="132" width="184" height="70" rx="14" fill="#EB6A2C"/>
+      <text x="370" y="160" text-anchor="middle" font-size="13" fill="#FFF0E7">EDGE</text>
+      <text x="370" y="184" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">Spring Cloud Gateway</text>
+
+      <path d="M462 167H522" fill="none" stroke="#8B9099" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <rect x="528" y="132" width="614" height="70" rx="14" fill="#FFFDF9" stroke="#D7D1C7"/>
+      <text x="835" y="160" text-anchor="middle" font-size="13" fill="#8B6B59">SERVICE COLLABORATION</text>
+      <text x="835" y="184" text-anchor="middle" font-size="18" font-weight="700" fill="#23262D">领域服务 · OpenFeign · 登录上下文 · 统一响应</text>
+    </g>
+
+    <path d="M528 221H1142" stroke="#C9C2B8" stroke-width="1.5" stroke-dasharray="4 5"/>
+    <circle cx="528" cy="221" r="4" fill="#EB6A2C"/>
+    <text x="543" y="226" font-size="13" font-weight="600" fill="#6E625B">治理平面：Nacos 服务发现与配置 · Sentinel 流量治理</text>
+
+    <text x="54" y="251" font-size="12" font-weight="700" fill="#8B6B59" letter-spacing="1.5">DOMAIN SERVICES</text>
+
+    <g font-size="16" font-weight="700" text-anchor="middle">
+      <g transform="translate(54 272)"><rect width="202" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="111" y="35" fill="#23262D">专辑 · 声音</text></g>
+      <g transform="translate(274 272)"><rect width="202" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="111" y="35" fill="#23262D">用户 · VIP</text></g>
+      <g transform="translate(494 272)"><rect width="202" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="111" y="35" fill="#23262D">搜索 · 排行</text></g>
+      <g transform="translate(714 272)"><rect width="202" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="111" y="35" fill="#23262D">订单 · 交易</text></g>
+      <g transform="translate(934 272)"><rect width="208" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="114" y="35" fill="#23262D">账户 · 支付</text></g>
+      <g transform="translate(54 346)"><rect width="202" height="58" rx="12" fill="#FFFFFF" stroke="#DED8CE" stroke-dasharray="5 5"/><circle cx="24" cy="29" r="6" fill="#A9A39A"/><text x="111" y="35" fill="#555A64">评论</text></g>
+      <g transform="translate(274 346)"><rect width="202" height="58" rx="12" fill="#FFFFFF" stroke="#DED8CE" stroke-dasharray="5 5"/><circle cx="24" cy="29" r="6" fill="#A9A39A"/><text x="111" y="35" fill="#555A64">直播</text></g>
+      <g transform="translate(494 346)"><rect width="202" height="58" rx="12" fill="#FFFDF9" stroke="#D7D1C7"/><circle cx="24" cy="29" r="6" fill="#EB6A2C"/><text x="111" y="35" fill="#23262D">调度任务</text></g>
+      <g transform="translate(714 346)"><rect width="428" height="58" rx="12" fill="#23262D"/><text x="214" y="25" font-size="12" font-weight="600" fill="#AEB3BC">SHARED CONTRACT</text><text x="214" y="45" fill="#FFFFFF">service-client · common · model</text></g>
+    </g>
+
+    <path d="M54 435H1142" stroke="#DED8CE" stroke-width="2"/>
+    <text x="54" y="470" font-size="12" font-weight="700" fill="#8B6B59" letter-spacing="1.5">DATA &amp; INFRASTRUCTURE</text>
+
+    <g font-size="14" font-weight="600" fill="#373B43" text-anchor="middle">
+      <g transform="translate(54 487)"><rect width="126" height="40" rx="9" fill="#EDE8DE"/><text x="63" y="25">MySQL</text></g>
+      <g transform="translate(192 487)"><rect width="126" height="40" rx="9" fill="#EDE8DE"/><text x="63" y="25">Redis</text></g>
+      <g transform="translate(330 487)"><rect width="126" height="40" rx="9" fill="#EDE8DE"/><text x="63" y="25">RabbitMQ</text></g>
+      <g transform="translate(468 487)"><rect width="146" height="40" rx="9" fill="#EDE8DE"/><text x="73" y="25">Elasticsearch</text></g>
+      <g transform="translate(626 487)"><rect width="126" height="40" rx="9" fill="#EDE8DE"/><text x="63" y="25">MongoDB</text></g>
+      <g transform="translate(764 487)"><rect width="126" height="40" rx="9" fill="#EDE8DE"/><text x="63" y="25">MinIO / VOD</text></g>
+      <g transform="translate(902 487)"><rect width="116" height="40" rx="9" fill="#EDE8DE"/><text x="58" y="25">XXL-JOB</text></g>
+      <g transform="translate(1030 487)"><rect width="112" height="40" rx="9" fill="#EB6A2C"/><text x="56" y="25" fill="#FFFFFF">微信支付</text></g>
+    </g>
+  </g>
+</svg>

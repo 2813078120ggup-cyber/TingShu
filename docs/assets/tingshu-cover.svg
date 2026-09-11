@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="title desc">
+  <title id="title">TingShu 听书平台</title>
+  <desc id="desc">深色播放台风格封面，包含耳机、声波和微服务节点图形</desc>
+  <rect width="1200" height="360" rx="28" fill="#171A20"/>
+  <path d="M0 292H1200V360H0Z" fill="#20242C"/>
+  <circle cx="1090" cy="74" r="118" fill="#20242C"/>
+  <circle cx="1090" cy="74" r="77" fill="#171A20"/>
+
+  <g transform="translate(78 70)">
+    <rect x="0" y="0" width="220" height="220" rx="36" fill="#EB6A2C"/>
+    <path d="M50 112C50 76.7 76.9 48 110 48s60 28.7 60 64" fill="none" stroke="#FFF7EE" stroke-width="15" stroke-linecap="round"/>
+    <rect x="42" y="108" width="30" height="62" rx="15" fill="#FFF7EE"/>
+    <rect x="148" y="108" width="30" height="62" rx="15" fill="#FFF7EE"/>
+    <path d="M104 91v42l34-21-34-21Z" fill="#171A20"/>
+  </g>
+
+  <g fill="#F6F2EA" font-family="Segoe UI, Microsoft YaHei, sans-serif">
+    <text x="346" y="123" font-size="60" font-weight="700" letter-spacing="-1">TingShu</text>
+    <text x="350" y="169" font-size="24" font-weight="600" fill="#EB6A2C" letter-spacing="4">听 书 微 服 务 平 台</text>
+    <text x="350" y="216" font-size="20" fill="#B5BAC4">从内容发现到权益购买，构建清晰可靠的音频业务链路</text>
+  </g>
+
+  <g transform="translate(350 252)">
+    <rect x="0" y="0" width="2" height="22" rx="1" fill="#6E747F"/>
+    <rect x="18" y="-8" width="2" height="38" rx="1" fill="#6E747F"/>
+    <rect x="36" y="-20" width="2" height="62" rx="1" fill="#EB6A2C"/>
+    <rect x="54" y="-12" width="2" height="46" rx="1" fill="#6E747F"/>
+    <rect x="72" y="-27" width="2" height="76" rx="1" fill="#EB6A2C"/>
+    <rect x="90" y="-16" width="2" height="54" rx="1" fill="#6E747F"/>
+    <rect x="108" y="-6" width="2" height="34" rx="1" fill="#6E747F"/>
+    <rect x="126" y="-23" width="2" height="68" rx="1" fill="#EB6A2C"/>
+    <rect x="144" y="-11" width="2" height="44" rx="1" fill="#6E747F"/>
+    <path d="M179 11H656" stroke="#3B404A" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="520" cy="11" r="6" fill="#EB6A2C"/>
+    <text x="674" y="17" fill="#8F96A3" font-family="Segoe UI, Microsoft YaHei, sans-serif" font-size="15">JAVA 17 · SPRING CLOUD</text>
+  </g>
+</svg>
