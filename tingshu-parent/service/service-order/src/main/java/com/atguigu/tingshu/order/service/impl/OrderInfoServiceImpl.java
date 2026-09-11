@@ -388,15 +388,34 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     }
     
     // 根据订单编号修改订单状态
-    private void orderPaySuccess(String orderNo) {
-        // 1. 根据订单编号查询订单对象
+    public void orderPaySuccess(String orderNo) {
+        //  查询对象
+        //  OrderInfo orderInfo = this.getOne(new LambdaQueryWrapper<OrderInfo>().eq(OrderInfo::getOrderNo, orderNo));
         OrderInfo orderInfo = this.getOrderInfoByOrderNo(orderNo);
-        //  判断当前订单状态 未支付：修改   已支付：不修改
-        if (orderInfo.getOrderStatus().equals(SystemConstant.ORDER_STATUS_UNPAID)) {
-            // 2. 订单对象设置状态值
-            orderInfo.setOrderStatus(SystemConstant.ORDER_STATUS_PAID);
-            // 3. 调用方法进行修改
-            this.orderInfoMapper.updateById(orderInfo);
+        //  如果已经修改为支付，那么就不需要再修改了.
+        if (orderInfo.getOrderStatus().equals(SystemConstant.ORDER_STATUS_PAID)) {
+            return;
+        }
+        //  赋值为已支付
+        orderInfo.setOrderStatus(SystemConstant.ORDER_STATUS_PAID);
+        //  修改状态
+        this.updateById(orderInfo);
+        //  记录用户购买信息: 微信支付就需要再次调用；余额支付不需要！
+        if (orderInfo.getPayWay().equals(SystemConstant.ORDER_PAY_WAY_WEIXIN)) {
+            //  添加一个判断：
+            //  保存用户购买记录：
+            UserPaidRecordVo userPaidRecordVo = new UserPaidRecordVo();
+            userPaidRecordVo.setOrderNo(orderNo);
+            userPaidRecordVo.setUserId(orderInfo.getUserId());
+            userPaidRecordVo.setItemType(orderInfo.getItemType());
+            //  [专辑Id;vip服务配置Id;下单的时候只能购买一个，这个明细数据就是一条] 声音Id{应该是集合}
+            //  以上Id都在? orderInfoVo.getOrderDetailVoList(); 订单明细表中有itemId;
+            //  List<Long> itemIdList = orderInfoVo.getOrderDetailVoList().stream().map(OrderDetailVo::getItemId).collect(Collectors.toList());
+            //  声音只支持余额支付！
+            List<Long> itemIdList = orderInfo.getOrderDetailList().stream().map(OrderDetail::getItemId).collect(Collectors.toList());
+            userPaidRecordVo.setItemIdList(itemIdList);
+            //  远程调用保存用户交易记录。
+            this.userInfoFeignClient.savePaidRecord(userPaidRecordVo);
         }
     }
     

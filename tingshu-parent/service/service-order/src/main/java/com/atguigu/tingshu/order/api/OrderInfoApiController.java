@@ -62,7 +62,7 @@ public class OrderInfoApiController {
     @TingShuLogin
     @Operation(summary = "根据订单号获取订单信息")
     @GetMapping("getOrderInfo/{orderNo}")
-    public Result<OrderInfo> getOrderInfo(@PathVariable String orderNo) {
+    public Result<OrderInfo> getOrderInfo(@PathVariable("orderNo") String orderNo) {
         OrderInfo orderInfo = orderInfoService.getOrderInfoByOrderNo(orderNo);
         return Result.ok(orderInfo);
     }

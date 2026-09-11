@@ -23,4 +23,6 @@ public interface OrderInfoService extends IService<OrderInfo> {
     
     // 根据订单号获取订单信息
     OrderInfo getOrderInfoByOrderNo(String orderNo);
+    
+    void orderPaySuccess(String orderNo);
 }

@@ -63,8 +63,8 @@ public class RabbitService {
         
         //3 向延迟队列发送消息，设置延迟时间
         //delayedQueue.offer(id.toString(),30,TimeUnit.MINUTES);
-        // todo：测试 设置10s 实际改为30min
-        delayedQueue.offer(orderId.toString(), 10, TimeUnit.SECONDS);
+        // 测试 设置10s 实际改为30min
+        delayedQueue.offer(orderId.toString(), 30, TimeUnit.MINUTES);
         
     }
 }
